@@ -43,6 +43,10 @@ export default class SheetDatabase {
   async fetchTables() {
     await this.db.loadData();
     console.log(this.db._tables)
+    for (const table of Object.values(this.db.tables)) {
+      await table.loadTableHeaders();
+      this[table.title] = table;
+    }
   }
 }
 

@@ -139,6 +139,41 @@ class Database {
     }
     return config;
   }
+
+
+  async _requestUpdate(requestType: string, requestParams: any) {
+    const response = await this.axios.post(':batchUpdate', {
+      requests: [{[requestType]: requestParams}],
+      includeSpreadsheetInResponse: true,
+      responseIncludeGridData: true,
+    });
+
+    response.data.updatedSpreadsheet.sheets.forEach((s: Sheet) =>
+      this._updateOrCreateTable(s)
+    );
+
+    return response.data.replies[0][requestType];
+  }
+
+  async _requestBatchUpdate(requests: string[], responseRanges: any) {
+    // this is used for updating batches of cells
+    const response = await this.axios.post(':batchUpdate', {
+      requests,
+      includeSpreadsheetInResponse: true,
+      ...(responseRanges && {
+        responseIncludeGridData: true,
+        ...(responseRanges !== '*' && {responseRanges}),
+      }),
+    });
+
+    response.data.updatedSpreadsheet.sheets.forEach((s: Sheet) =>
+      this._updateOrCreateTable(s)
+    );
+  }
+
+  get tables() {
+    return this._tables;
+  }
 }
 
 export default Database;
