@@ -208,15 +208,51 @@ class Database {
     this.notifyAction(ACTIONS.TABLE_DELETED, tableName);
   }
 
-  async renameTable(sheetId: number, newName: string) {
+  async updateSheetProperties(sheetId: number, properties: Object) {
     const tableName = this._tables[sheetId].name;
     await this._requestUpdate('updateSheetProperties', {
-      properties: {sheetId: sheetId, title: newName},
-      fields: 'title',
+      properties: {
+        sheetId: sheetId, 
+        ...properties
+      },
+      fields: Object.keys(properties).join(','),
     });
-    console.log('Renaming');
-    this.notifyAction(ACTIONS.TABLE_RENAMED, tableName, newName);
-    console.log('renamed');
+    if ('title' in properties) {
+      this.notifyAction(ACTIONS.TABLE_RENAMED, tableName, properties['title']);
+    }
+  }
+
+  /**
+   *
+   * @param {string|Array.<string>} filters filters of the request
+   */
+  async loadCells(filters: string | Array<string>) {
+    const readOnlyMode = this.authMode === AUTH_MODE.API_KEY;
+    const filtersArray = Array.isArray(filters) ? filters : [filters];
+
+    const dataFilters = filtersArray.map(filter => {
+      return readOnlyMode ? filter : {a1Range: filter};
+    });
+
+    let result;
+    // when using an API key only, we must use the regular get endpoint
+    // because :getByDataFilter requires higher access
+    if (this.authMode === AUTH_MODE.API_KEY) {
+      result = await this.axios.get('/', {
+        params: {
+          includeGridData: true,
+          ranges: dataFilters,
+        },
+      });
+      // otherwise we use the getByDataFilter endpoint because it is more flexible
+    } else {
+      result = await this.axios.post(':getByDataFilter', {
+        includeGridData: true,
+        dataFilters,
+      });
+    }
+    const {sheets} = result.data;
+    sheets.forEach((s: Sheet) => this._updateOrCreateTable(s));
   }
 }
 

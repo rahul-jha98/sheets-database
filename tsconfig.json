@@ -8,8 +8,6 @@
     "declaration": true,
 
     "pretty": true,
-
-    "strict": true,
     
     "skipLibCheck": true,
     "allowUnreachableCode": false,

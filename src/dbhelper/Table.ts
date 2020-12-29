@@ -5,7 +5,7 @@ import {Sheet, SheetData, SheetProperties} from './ResponseStructure';
 export default class Table {
   _database: Database;
   _properties: SheetProperties;
-  _cells: (string | null)[][];
+  _cells: (string|number|boolean|null)[][];
   headerValues: string[];
 
   constructor(database: Database, {properties, data}: Sheet) {
@@ -20,7 +20,6 @@ export default class Table {
 
   _fillTableData(dataRanges: Array<SheetData>) {
     dataRanges.forEach((range: SheetData) => {
-      console.log(range.rowData);
 
       const numRows = range.rowMetadata.length;
       const numColumns = range.columnMetadata.length;
@@ -34,8 +33,9 @@ export default class Table {
             range.rowData[row] &&
             range.rowData[row].values[column]
           ) {
-            const cellValue = range.rowData[row].values[column].formattedValue;
-            this._cells[row][column] = cellValue;
+            
+            const cellValue = range.rowData[row].values[column].effectiveValue;
+            this._cells[row][column] = cellValue.numberValue || cellValue.stringValue || cellValue.boolValue;
           }
         }
       }
@@ -186,6 +186,10 @@ export default class Table {
     }
   }
 
+  async loadCells() {
+    return this._database.loadCells(this.a1SheetName);
+  }
+
   /**
    * Delete the given table
    */
@@ -194,7 +198,53 @@ export default class Table {
   }
 
   async rename(newName: string) {
-    return this._database.renameTable(this.sheetId, newName);
+    return this._database.updateSheetProperties(this.sheetId, {title: newName});
   }
-  
+
+  async insertRows(rowValueArray) {
+    const rowsArray = []
+    rowValueArray.forEach((row) => {
+      let rowAsArray;
+      if (Array.isArray(row)) {
+        rowAsArray = row;
+      } else if (typeof row === 'object' && row != null) {
+        rowAsArray = []
+        for(let i = 0; i < this.headerValues.length; i++) {
+          const columnName = this.headerValues[i];
+          rowAsArray[i] = row[columnName];
+        }
+      } else {
+        throw new Error("Row must be object or array")
+      }
+      rowsArray.push(rowAsArray);
+    });
+
+    return this._addRows(rowsArray);
+
+  }
+  async insertRow(rowValue: Array<any>|Object) {
+    return this.insertRows([rowValue]);
+  }
+
+  async _addRows(rowsArrays: any[][], insert: boolean = false) {
+    if (!Array.isArray(rowsArrays)) throw new Error('Row values needs to be an array');
+
+    if (!this.headerValues) await this.loadTableHeaders();
+
+    const response = await this._database.axios.request({
+      method: 'post',
+      url: `/values/${this.encodedA1SheetName}!A1:append`,
+      params: {
+        valueInputOption: 'RAW',
+        insertDataOption: insert ? 'INSERT_ROWS' : 'OVERWRITE',
+        includeValuesInResponse: true,
+      },
+      data: {
+        values: rowsArrays,
+      },
+    });
+
+    // if new rows were added, we need update sheet.rowRount
+    await this.loadCells();
+  }
 }

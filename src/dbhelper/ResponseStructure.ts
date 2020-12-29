@@ -4,7 +4,11 @@ export type SheetProperties = {
   [key: string]: any
 }
 export type SheetData = {
-  rowData: Array<{values: Array<{formattedValue: any}>}>
+  rowData: Array<{values: Array<{effectiveValue: {
+    numberValue?:number, 
+    stringValue?:string, 
+    boolValue?: boolean,
+  }}>}>
   rowMetadata: Array<Object>,
   columnMetadata: Array<Object>
 }

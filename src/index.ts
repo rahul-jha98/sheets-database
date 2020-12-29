@@ -51,7 +51,6 @@ export default class SheetDatabase {
    */
   async fetchTables() {
     await this.db.loadData();
-    console.log(this.db._tables)
     for (const table of Object.values(this.db.tables)) {
       await table.loadTableHeaders();
       this[table.title] = table;
@@ -63,7 +62,7 @@ export default class SheetDatabase {
    * @param {string} tableName Name of the table you need
    * @return {Table} Table object corresponding to given table name
    */
-  getTable(tableName: string) {
+  getTable(tableName: string) : Table {
     if (this.hasOwnProperty(tableName)) {
       return this[tableName];
     }
@@ -112,12 +111,10 @@ async function test() {
   const dat = new SheetDatabase('1nwIJ9lLyivfsAlRBnkxl7Su7tCBo6tVsW9zwVCdTfsU');
   dat.useServiceAccount(creds.client_email, creds.private_key);
   await dat.fetchTables();
-
-  await dat.addTable('test3', ['id', 'name']);
-  console.log(dat.test3.headerValues);
-  await dat.test3.rename('test4');
-
-  await dat.test4.delete();
+  
+  await dat.getTable('test4').insertRow(['string1', 1]);
+  await dat['test4'].insertRow({'id': 2, 'name': 'string2'});
+  console.log(dat.test4._cells);
 }
 
 test();
