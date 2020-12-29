@@ -2,8 +2,9 @@
   "name": "google-sheets-db",
   "version": "1.0.0",
   "description": "Library to help use a Google Sheet as a database",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
+    "start": "tsc && node lib/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
