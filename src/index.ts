@@ -1,9 +1,8 @@
-import Database from './dbhelper/Database';
-import ACTIONS from './dbhelper/actions';
-import type Table from './dbhelper/Table';
-import creds from './creds.json';
+import {Database} from './dbhelper/Database';
+import {ACTIONS} from './dbhelper/actions';
+import type  {Table} from './dbhelper/Table';
 
-export default class SheetDatabase {
+export class SheetDatabase {
   db: Database;
   [key: string]: any;
 
@@ -49,10 +48,10 @@ export default class SheetDatabase {
   /**
    * Load the data of tables from sheet into memory
    */
-  async fetchTables() {
-    await this.db.loadData();
+  async fetchTables(loadTableData: boolean = true) {
+    await this.db.loadData(loadTableData);
     for (const table of Object.values(this.db.tables)) {
-      await table.loadTableHeaders();
+      await table.loadColumnNames(true);
       this[table.title] = table;
     }
   }
@@ -84,7 +83,7 @@ export default class SheetDatabase {
       },
       headerValues: columnNames,
     });
-    await table.loadTableHeaders();
+    await table.loadColumnNames();
     this[table.title] = table;
   }
 
@@ -106,15 +105,3 @@ export default class SheetDatabase {
   }
 
 }
-
-async function test() {
-  const dat = new SheetDatabase('1nwIJ9lLyivfsAlRBnkxl7Su7tCBo6tVsW9zwVCdTfsU');
-  dat.useServiceAccount(creds.client_email, creds.private_key);
-  await dat.fetchTables();
-  
-  await dat.getTable('test4').insertRow(['string1', 1]);
-  await dat['test4'].insertRow({'id': 2, 'name': 'string2'});
-  console.log(dat.test4._cells);
-}
-
-test();

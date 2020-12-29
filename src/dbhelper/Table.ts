@@ -1,19 +1,22 @@
 import {columnNumberToName} from './utils';
-import type Database from './Database';
+import type {Database} from './Database';
 import {Sheet, SheetData, SheetProperties} from './ResponseStructure';
 
-export default class Table {
+type primitiveTypes = string | boolean | number | null;
+
+export class Table {
   _database: Database;
   _properties: SheetProperties;
-  _cells: (string|number|boolean|null)[][];
-  headerValues: string[];
+  _cells: (primitiveTypes)[][];
+  columnNames: string[];
+  lastRowWithValues: number;
 
   constructor(database: Database, {properties, data}: Sheet) {
     this._database = database;
     this._properties = properties;
 
     this._cells = [];
-    this.headerValues = [];
+    this.columnNames = [];
 
     if (data) this._fillTableData(data);
   }
@@ -21,8 +24,8 @@ export default class Table {
   _fillTableData(dataRanges: Array<SheetData>) {
     dataRanges.forEach((range: SheetData) => {
 
-      const numRows = range.rowMetadata.length;
-      const numColumns = range.columnMetadata.length;
+      const numRows = this.rowCount;
+      const numColumns = this.columnCount;
 
       for (let row = 0; row < numRows; row++) {
         for (let column = 0; column < numColumns; column++) {
@@ -33,7 +36,7 @@ export default class Table {
             range.rowData[row] &&
             range.rowData[row].values[column]
           ) {
-            
+            this.lastRowWithValues = row;
             const cellValue = range.rowData[row].values[column].effectiveValue;
             this._cells[row][column] = cellValue.numberValue || cellValue.stringValue || cellValue.boolValue;
           }
@@ -109,15 +112,20 @@ export default class Table {
   }
 
 
-  async loadTableHeaders() {
+  async loadColumnNames(silent:boolean= false) {
+    
     const rows = await this.getCellsInRange(`A1:${this.lastColumnLetter}1`);
     if (!rows) {
+      if (silent)
+        return;
       throw new Error('Table Headers (Header Row) is missing.');
     }
     console.log(rows[0]);
-    this.headerValues = rows[0].map((header: string) => header.trim());
+    this.columnNames = rows[0].map((header: string) => header.trim());
     
-    if (!this.headerValues.filter(Boolean).length) {
+    if (!this.columnNames.filter(Boolean).length) {
+      if (silent)
+        return;
       throw new Error('All table headers are empty');
     }
   }
@@ -142,7 +150,7 @@ export default class Table {
    * Updates the header values in the sheet
    * @param {Array.<string>} headerValues Name of header values to be set
    */
-  async setTableHeaders(headerValues: string[]) {
+  async setColumnNames(headerValues: string[]) {
     if (!headerValues) return;
 
     if (headerValues.length > this.columnCount) {
@@ -179,7 +187,7 @@ export default class Table {
         ],
       },
     });
-    this.headerValues = response.data.updatedData.values[0];
+    this.columnNames = response.data.updatedData.values[0];
 
     for (let i = 0; i < headerValues.length; i++) {
       this._cells[0][i] = headerValues[i];
@@ -201,16 +209,17 @@ export default class Table {
     return this._database.updateSheetProperties(this.sheetId, {title: newName});
   }
 
-  async insertRows(rowValueArray) {
-    const rowsArray = []
+  async insertMany(rowValueArray, refetch: boolean = true) {
+    const rowsArray: primitiveTypes[][] = []
+
     rowValueArray.forEach((row) => {
       let rowAsArray;
       if (Array.isArray(row)) {
         rowAsArray = row;
       } else if (typeof row === 'object' && row != null) {
         rowAsArray = []
-        for(let i = 0; i < this.headerValues.length; i++) {
-          const columnName = this.headerValues[i];
+        for(let i = 0; i < this.columnNames.length; i++) {
+          const columnName = this.columnNames[i];
           rowAsArray[i] = row[columnName];
         }
       } else {
@@ -219,25 +228,36 @@ export default class Table {
       rowsArray.push(rowAsArray);
     });
 
-    return this._addRows(rowsArray);
+    return this._addRows(rowsArray, refetch = refetch);
 
   }
-  async insertRow(rowValue: Array<any>|Object) {
-    return this.insertRows([rowValue]);
+  async insertOne(rowValue: Array<primitiveTypes>|Object, refetch:boolean = true) {
+    return this.insertMany([rowValue], refetch=refetch);
   }
 
-  async _addRows(rowsArrays: any[][], insert: boolean = false) {
+  async insert(rowValue, refetch: boolean = true) {
+    if (Array.isArray(rowValue)) {
+      if (Array.isArray(rowValue[0]) || (typeof rowValue[0] === 'object' && rowValue[0] != null)) {
+        return this.insertMany(rowValue, refetch);
+      }
+    }
+    return this.insertMany([rowValue], refetch)
+  }
+
+  async _addRows(rowsArrays: primitiveTypes[][], 
+    refetch: boolean = true,
+    insert: boolean = false) {
+    console.log(insert, refetch);
     if (!Array.isArray(rowsArrays)) throw new Error('Row values needs to be an array');
 
-    if (!this.headerValues) await this.loadTableHeaders();
+    if (!this.columnNames) await this.loadColumnNames();
 
-    const response = await this._database.axios.request({
+    await this._database.axios.request({
       method: 'post',
       url: `/values/${this.encodedA1SheetName}!A1:append`,
       params: {
         valueInputOption: 'RAW',
         insertDataOption: insert ? 'INSERT_ROWS' : 'OVERWRITE',
-        includeValuesInResponse: true,
       },
       data: {
         values: rowsArrays,
@@ -245,6 +265,18 @@ export default class Table {
     });
 
     // if new rows were added, we need update sheet.rowRount
-    await this.loadCells();
+    console.log("Inserted Values");
+    if (refetch) {
+      console.log("Fetching")
+      await this.loadCells();
+    }
+  }
+
+  getDataAsArray() : primitiveTypes[][] {
+    return this._cells.slice(1, this.lastRowWithValues + 1);
+  }
+
+  async getData() {
+
   }
 }

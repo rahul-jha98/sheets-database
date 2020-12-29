@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Library to help use a Google Sheet as a database",
   "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
     "start": "tsc && node lib/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"

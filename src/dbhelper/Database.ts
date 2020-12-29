@@ -1,8 +1,8 @@
 import axios, {AxiosInstance, AxiosRequestConfig} from 'axios';
 import {JWT} from 'google-auth-library';
-import ACTIONS from './actions';
+import {ACTIONS} from './actions';
 import {Sheet} from './ResponseStructure';
-import Table from './Table';
+import {Table} from './Table';
 
 const AUTH_MODE = {
   ACCESS_TOKEN: 1,
@@ -21,7 +21,7 @@ const GOOGLE_AUTH_SCOPES = [
   // 'https://www.googleapis.com/auth/spreadsheets.readonly',
 ];
 
-class Database {
+export class Database {
   sheetId: string;
 
   _tables: Record<number, Table> = {};
@@ -79,10 +79,10 @@ class Database {
     }
   }
 
-  async loadData() {
+  async loadData(withData: boolean = true) {
     const response = await this.axios.get('/', {
       params: {
-        includeGridData: true,
+        includeGridData: withData,
       },
     });
     response.data.sheets.forEach((s: Sheet) => {
@@ -193,7 +193,7 @@ class Database {
 
     // allow it to work with `.headers` but `.headerValues` is the real prop
     if (headerValues || headers) {
-      await newSheet.setTableHeaders(headerValues || headers);
+      await newSheet.setColumnNames(headerValues || headers);
     }
 
     return newSheet;
@@ -255,5 +255,3 @@ class Database {
     sheets.forEach((s: Sheet) => this._updateOrCreateTable(s));
   }
 }
-
-export default Database;
