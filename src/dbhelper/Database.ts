@@ -174,6 +174,50 @@ class Database {
   get tables() {
     return this._tables;
   }
+
+  async addTable(properties: Record<string, any>) {
+    // Request type = `addSheet`
+    // https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#AddSheetRequest
+    const headers = properties['headers'];
+    const headerValues = properties['headerValues'];
+
+    delete properties['headers'];
+    delete properties['headerValues'];
+
+    const response = await this._requestUpdate('addSheet', {
+      properties: properties || {},
+    });
+    // _makeSingleUpdateRequest already adds the sheet
+    const newSheetId = response.properties.sheetId;
+    const newSheet = this._tables[newSheetId];
+
+    // allow it to work with `.headers` but `.headerValues` is the real prop
+    if (headerValues || headers) {
+      await newSheet.setTableHeaders(headerValues || headers);
+    }
+
+    return newSheet;
+  }
+
+  async deleteTable(sheetId: number) {
+    // Request type = `deleteSheet`
+    // https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#DeleteSheetRequest
+    const tableName = this._tables[sheetId].name;
+    await this._requestUpdate('deleteSheet', {sheetId});
+    delete this._tables[sheetId];
+    this.notifyAction(ACTIONS.TABLE_DELETED, tableName);
+  }
+
+  async renameTable(sheetId: number, newName: string) {
+    const tableName = this._tables[sheetId].name;
+    await this._requestUpdate('updateSheetProperties', {
+      properties: {sheetId: sheetId, title: newName},
+      fields: 'title',
+    });
+    console.log('Renaming');
+    this.notifyAction(ACTIONS.TABLE_RENAMED, tableName, newName);
+    console.log('renamed');
+  }
 }
 
 export default Database;

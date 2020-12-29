@@ -185,4 +185,16 @@ export default class Table {
       this._cells[0][i] = headerValues[i];
     }
   }
+
+  /**
+   * Delete the given table
+   */
+  async delete() {
+    return this._database.deleteTable(this.sheetId);
+  }
+
+  async rename(newName: string) {
+    return this._database.renameTable(this.sheetId, newName);
+  }
+  
 }
