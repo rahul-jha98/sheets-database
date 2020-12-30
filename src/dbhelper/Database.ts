@@ -175,7 +175,7 @@ export class Database {
       includeSpreadsheetInResponse: fetchSpreadsheet,
       responseIncludeGridData: fetchSpreadsheet,
     });
-    console.log(response.data);
+
     response.data?.updatedSpreadsheet?.sheets?.forEach((s: Sheet) =>
       this._updateOrCreateTable(s)
     );
@@ -203,7 +203,7 @@ export class Database {
     return this._tables;
   }
 
-  async addTable(properties: Record<string, any>) {
+  async addTable(properties: Record<string, any>) : Promise<Table> {
     // Request type = `addSheet`
     // https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#AddSheetRequest
     const headers = properties['headers'];

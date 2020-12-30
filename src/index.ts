@@ -5,16 +5,20 @@ import type  {Table} from './dbhelper/Table';
 export class SheetDatabase {
   db: Database;
   [key: string]: any;
+  tables: Record<string, Table> = {}
 
   constructor(sheetId: string = '') {
     this.db = new Database(sheetId);
     this.db.subscrible((actionType: number, ...payload: string[]) => {
       if (actionType === ACTIONS.TABLE_DELETED) {
         delete this[payload[0]];
+        delete this.tables[payload[0]]
       } else if (actionType === ACTIONS.TABLE_RENAMED) {
         const table = this[payload[0]];
         delete this[payload[0]];
+        delete this.tables[payload[0]]
         this[payload[1]] = table;
+        this.tables[payload[1]] = table;
       }
     });
   }
@@ -50,9 +54,11 @@ export class SheetDatabase {
    */
   async fetchTablesList(loadTableData: boolean = true) {
     await this.db.loadData(loadTableData);
+
     for (const table of Object.values(this.db.tables)) {
       await table.loadColumnNames(true);
       this[table.title] = table;
+      this.tables[table.title] = table;
     }
   }
 
@@ -62,8 +68,8 @@ export class SheetDatabase {
    * @return {Table} Table object corresponding to given table name
    */
   getTable(tableName: string) : Table {
-    if (this.hasOwnProperty(tableName)) {
-      return this[tableName];
+    if (this.tables.hasOwnProperty(tableName)) {
+      return this.tables[tableName];
     }
     throw new Error('No table named ' + tableName);
   }
@@ -85,6 +91,8 @@ export class SheetDatabase {
     });
     await table.loadColumnNames();
     this[table.title] = table;
+    this.tables[table.title] = table;
+    return table;
   }
 
   /**
@@ -92,7 +100,7 @@ export class SheetDatabase {
    * @param {string} tableName name of the table to drop
    */
   async dropTable(tableName: string) {
-    await this[tableName].delete();
+    await this.tables[tableName].delete();
   }
 
   /**
@@ -101,7 +109,7 @@ export class SheetDatabase {
    * @param {string} newTableName new name of the table
    */
   async renameTable(tableName:string, newTableName:string) {
-    await this[tableName].rename(newTableName);
+    await this.tables[tableName].rename(newTableName);
   }
 
   get title() {
@@ -113,3 +121,5 @@ export class SheetDatabase {
     return tables;
   }
 }
+
+export default SheetDatabase;

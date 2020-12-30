@@ -1,6 +1,8 @@
 package-lock.json
 lib/
 src/creds.json
+test/API_KEY.ts
+test/creds.json
 # Logs
 logs
 *.log

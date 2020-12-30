@@ -227,6 +227,10 @@ export class Table {
     return this._database.deleteTable(this.sheetId);
   }
 
+  async drop() {
+    return this.delete();
+  }
+
   async rename(newName: string) {
     return this._database.updateSheetProperties(this.sheetId, {title: newName});
   }
@@ -374,7 +378,10 @@ export class Table {
     }
   }
 
-  async deleteRows(rows: number[]) {
+  async deleteRows(rows: number[], sorted: boolean = false) {
+    if (!sorted) {
+      rows.sort((a, b) => b - a);
+    }
     this._ensureRowValid(rows[0] + 1);
     this._ensureRowValid(rows[rows.length - 1] + 1);
     const rowRanges = reduceRowsToDelete(rows);;
