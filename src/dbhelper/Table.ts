@@ -2,14 +2,15 @@ import {columnNumberToName} from './utils';
 import type {Database} from './Database';
 import {Sheet, SheetData, SheetProperties} from './ResponseStructure';
 
-type primitiveTypes = string | boolean | number | null;
+type primitiveTypes = string | boolean | number | null | undefined;
+type rowData = Array<primitiveTypes>|Record<string, primitiveTypes>
 
 export class Table {
   _database: Database;
   _properties: SheetProperties;
   _cells: (primitiveTypes)[][];
   columnNames: string[];
-  lastRowWithValues: number;
+  lastRowWithValues: number = 0;
 
   constructor(database: Database, {properties, data}: Sheet) {
     this._database = database;
@@ -38,7 +39,9 @@ export class Table {
           ) {
             this.lastRowWithValues = row;
             const cellValue = range.rowData[row].values[column].effectiveValue;
-            this._cells[row][column] = cellValue.numberValue || cellValue.stringValue || cellValue.boolValue;
+            this._cells[row][column] = cellValue.numberValue ||
+               cellValue.stringValue ||
+               cellValue.boolValue
           }
         }
       }
@@ -150,7 +153,7 @@ export class Table {
    * Updates the header values in the sheet
    * @param {Array.<string>} headerValues Name of header values to be set
    */
-  async setColumnNames(headerValues: string[]) {
+  async setColumnNames(headerValues: string[], shrinkTable:boolean = false) {
     if (!headerValues) return;
 
     if (headerValues.length > this.columnCount) {
@@ -165,7 +168,7 @@ export class Table {
     // checkForDuplicateHeaders(trimmedHeaderValues);
 
     if (!trimmedHeaderValues.filter(Boolean).length) {
-      throw new Error('All your header cells are blank -');
+      throw new Error('All your header cells are blank');
     }
 
     const response = await this._database.axios.request({
@@ -188,10 +191,23 @@ export class Table {
       },
     });
     this.columnNames = response.data.updatedData.values[0];
-
-    for (let i = 0; i < headerValues.length; i++) {
-      this._cells[0][i] = headerValues[i];
+    
+    if (shrinkTable && trimmedHeaderValues.length < this.columnCount) {
+      this.shrinkSheetToFitTable();
+    } else {
+      for (let i = 0; i < headerValues.length; i++) {
+        this._cells[0][i] = headerValues[i];
+      }
     }
+  }
+
+  async shrinkSheetToFitTable() {
+    this._database.updateSheetProperties(this.sheetId, {
+      gridProperties: {
+        rowCount: this.lastRowWithValues + 2,
+        columnCount: this.columnNames.length
+      }
+    });
   }
 
   async loadCells() {
@@ -209,11 +225,15 @@ export class Table {
     return this._database.updateSheetProperties(this.sheetId, {title: newName});
   }
 
-  async insertMany(rowValueArray, refetch: boolean = true) {
+  
+  async insertMany(rowValueArray: Array<rowData>,
+    refetch: boolean = true) {
     const rowsArray: primitiveTypes[][] = []
 
     rowValueArray.forEach((row) => {
+
       let rowAsArray;
+
       if (Array.isArray(row)) {
         rowAsArray = row;
       } else if (typeof row === 'object' && row != null) {
@@ -231,16 +251,18 @@ export class Table {
     return this._addRows(rowsArray, refetch = refetch);
 
   }
-  async insertOne(rowValue: Array<primitiveTypes>|Object, refetch:boolean = true) {
+  async insertOne(rowValue: rowData, refetch:boolean = true) {
     return this.insertMany([rowValue], refetch=refetch);
   }
 
-  async insert(rowValue, refetch: boolean = true) {
+  async insert(rowValue: rowData | Array<rowData>, refetch: boolean = true) {
     if (Array.isArray(rowValue)) {
       if (Array.isArray(rowValue[0]) || (typeof rowValue[0] === 'object' && rowValue[0] != null)) {
+        // @ts-ignore : type has been checked to ensure its not primitive type
         return this.insertMany(rowValue, refetch);
       }
     }
+    // @ts-ignore : if its array we have returned earlier
     return this.insertMany([rowValue], refetch)
   }
 
@@ -276,7 +298,16 @@ export class Table {
     return this._cells.slice(1, this.lastRowWithValues + 1);
   }
 
-  async getData() {
+  getData() : Array<Record<string, primitiveTypes>>{
+    const dataArray = []
+    for(let i = 1; i <= this.lastRowWithValues; i++) {
+      let rowObject:Record<string, primitiveTypes> = {};
 
+      for(let j = 0; j < this.columnNames.length; j++) {
+        rowObject[this.columnNames[j]] = this._cells[i][j];
+      }
+      dataArray.push(rowObject);
+    }
+    return dataArray;
   }
 }

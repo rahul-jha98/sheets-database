@@ -193,7 +193,7 @@ export class Database {
 
     // allow it to work with `.headers` but `.headerValues` is the real prop
     if (headerValues || headers) {
-      await newSheet.setColumnNames(headerValues || headers);
+      await newSheet.setColumnNames(headerValues || headers, true);
     }
 
     return newSheet;
