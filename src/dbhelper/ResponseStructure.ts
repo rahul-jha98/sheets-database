@@ -1,6 +1,7 @@
 export type SheetProperties = {
   sheetId: number,
   title: string,
+  index: number,
   [key: string]: any
 }
 export type SheetData = {

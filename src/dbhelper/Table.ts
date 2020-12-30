@@ -12,6 +12,8 @@ export class Table {
   columnNames: string[];
   lastRowWithValues: number = 0;
 
+  isFetchPending: boolean = true;
+
   constructor(database: Database, {properties, data}: Sheet) {
     this._database = database;
     this._properties = properties;
@@ -31,7 +33,7 @@ export class Table {
       for (let row = 0; row < numRows; row++) {
         for (let column = 0; column < numColumns; column++) {
           if (!this._cells[row]) this._cells[row] = [];
-          if (!this._cells[row][column]) this._cells[row][column] = null;
+          if (!this._cells[row][column]) this._cells[row][column] = undefined;
           if (
             range.rowData &&
             range.rowData[row] &&
@@ -66,6 +68,9 @@ export class Table {
     return this._getProp('title');
   }
 
+  get index() {
+    return this._getProp('index');
+  }
   /**
    * name of the given table
    */
@@ -123,7 +128,7 @@ export class Table {
         return;
       throw new Error('Table Headers (Header Row) is missing.');
     }
-    console.log(rows[0]);
+
     this.columnNames = rows[0].map((header: string) => header.trim());
     
     if (!this.columnNames.filter(Boolean).length) {
@@ -211,7 +216,8 @@ export class Table {
   }
 
   async loadCells() {
-    return this._database.loadCells(this.a1SheetName);
+    await this._database.loadCells(this.a1SheetName);
+    this.isFetchPending = false; 
   }
 
   /**

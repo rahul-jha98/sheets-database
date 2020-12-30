@@ -48,7 +48,7 @@ export class SheetDatabase {
   /**
    * Load the data of tables from sheet into memory
    */
-  async fetchTables(loadTableData: boolean = true) {
+  async fetchTablesList(loadTableData: boolean = true) {
     await this.db.loadData(loadTableData);
     for (const table of Object.values(this.db.tables)) {
       await table.loadColumnNames(true);
@@ -104,4 +104,12 @@ export class SheetDatabase {
     await this[tableName].rename(newTableName);
   }
 
+  get title() {
+    return this.db.title;
+  }
+
+  get tablesByIndex() {
+    const tables = [...Object.values(this.db._tables)].sort((tab1, tab2) => tab1.index - tab2.index);
+    return tables;
+  }
 }

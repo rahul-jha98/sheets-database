@@ -1,4 +1,4 @@
-import axios, {AxiosInstance, AxiosRequestConfig} from 'axios';
+import axios, {AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse} from 'axios';
 import {JWT} from 'google-auth-library';
 import {ACTIONS} from './actions';
 import {Sheet} from './ResponseStructure';
@@ -23,6 +23,7 @@ const GOOGLE_AUTH_SCOPES = [
 
 export class Database {
   sheetId: string;
+  title?: string;
 
   _tables: Record<number, Table> = {};
   axios: AxiosInstance;
@@ -32,6 +33,7 @@ export class Database {
   accessToken?: string;
   creds?: Object;
   jwtClient?: JWT;
+  
   notifyAction: (actionType: number, ...params: string[]) => void = () => {};
 
   constructor(sheetId: string = '') {
@@ -61,6 +63,10 @@ export class Database {
       },
     });
     this.axios.interceptors.request.use(this._setAuthorizationInRequest.bind(this));
+    this.axios.interceptors.response.use(
+      this._handleAxiosResponse.bind(this),
+      this._handleAxiosErrors.bind(this)
+    );
   }
 
   subscrible(
@@ -75,7 +81,7 @@ export class Database {
       this._tables[sheetId] = new Table(this, {properties, data});
     } else {
       this._tables[sheetId]._properties = properties;
-      this._tables[sheetId]._fillTableData(data);
+      if (data) this._tables[sheetId]._fillTableData(data);
     }
   }
 
@@ -85,6 +91,7 @@ export class Database {
         includeGridData: withData,
       },
     });
+    this.title = response.data.properties.title;
     response.data.sheets.forEach((s: Sheet) => {
       this._updateOrCreateTable(s);
     });
@@ -136,8 +143,29 @@ export class Database {
       await this.jwtClient.authorize();
 
       config.headers.Authorization = `Bearer ${this.jwtClient.credentials.access_token}`;
+    } else {
+      throw new Error("You need to set up some kind of authorization");
     }
     return config;
+  }
+
+  async _handleAxiosResponse(response: AxiosResponse) { return response; }
+  async _handleAxiosErrors(error: AxiosError) {
+    if (error.response && error.response.data) {
+      // usually the error has a code and message, but occasionally not
+      if (!error.response.data.error) throw error;
+
+      const { code, message } = error.response.data.error;
+      error.message = `Google API error - [${code}] ${message}`;
+      throw error;
+    }
+
+    if (error?.response?.status === 403) {
+      if (this.authMode === AUTH_MODE.API_KEY) {
+        throw new Error('Sheet is private. Use authentication or make public.');
+      }
+    }
+    throw error;
   }
 
 
