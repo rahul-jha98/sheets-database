@@ -45,5 +45,14 @@ export function reduceRowsToDelete(rowsToDelete: number[]) : number[][] {
       lastIdx++;
     }
   }
-  return []
+
+  let deletedSoFar = 0;
+  for (let i = 0; i < reducedRowsToDelete.length; i++) {
+    const [a, b] = reducedRowsToDelete[i];
+    const toDelete = b-a;
+    reducedRowsToDelete[i]= [a-deletedSoFar, b-deletedSoFar];
+    deletedSoFar += toDelete; 
+  }
+
+  return reducedRowsToDelete;
 }

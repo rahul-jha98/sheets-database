@@ -1,4 +1,4 @@
-import {columnNumberToName} from './utils';
+import {columnNumberToName, reduceRowsToDelete} from './utils';
 import type {Database} from './Database';
 import {Sheet, SheetData, SheetProperties} from './ResponseStructure';
 
@@ -324,7 +324,7 @@ export class Table {
 
   _ensureRowValid(idx: number) {
     if (idx > this.lastRowWithValues || idx < 1) {
-      throw new Error(`Cannot operate on row ${idx-1} from table with ${this.lastRowWithValues} entries`);
+      throw new Error(`Cannot operate on row index ${idx-1} from table with ${this.lastRowWithValues} entries`);
     }
   }
 
@@ -366,5 +366,17 @@ export class Table {
       console.log("Fetching")
       await this.loadCells();
     }
+  }
+
+  async deleteRows(rows: number[]) {
+    this._ensureRowValid(rows[0] + 1);
+    this._ensureRowValid(rows[rows.length - 1] + 1);
+    const rowRanges = reduceRowsToDelete(rows);;
+
+    for (const range of rowRanges) {
+      console.log("deleting ", range[0], " to ", range[1]);
+      await this.deleteRowRange(range[0], range[1], false);
+    }
+    await this.loadCells();
   }
 }
