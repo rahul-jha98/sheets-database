@@ -294,7 +294,7 @@ export class Table {
     }
   }
 
-  getDataAsArray() : primitiveTypes[][] {
+  getDataArray() : primitiveTypes[][] {
     return this._cells.slice(1, this.lastRowWithValues + 1);
   }
 
@@ -309,5 +309,62 @@ export class Table {
       dataArray.push(rowObject);
     }
     return dataArray;
+  }
+
+  getRow(idx: number) : Record<string, primitiveTypes> {
+    idx = idx + 1;
+    this._ensureRowValid(idx)
+    let rowObject:Record<string, primitiveTypes> = {};
+
+    for(let j = 0; j < this.columnNames.length; j++) {
+      rowObject[this.columnNames[j]] = this._cells[idx][j];
+    }
+    return rowObject;
+  }
+
+  _ensureRowValid(idx: number) {
+    if (idx > this.lastRowWithValues || idx < 1) {
+      throw new Error(`Cannot operate on row ${idx-1} from table with ${this.lastRowWithValues} entries`);
+    }
+  }
+
+  async deleteRow(idx: number, refetch: boolean = true) {
+    idx = idx + 1;
+    this._ensureRowValid(idx);
+    await this._database._requestUpdate('deleteRange', {
+      range: {
+        sheetId: this.sheetId,
+        startRowIndex: idx,
+        endRowIndex: idx+1
+      },
+      shiftDimension: 'ROWS',
+    });
+    if (refetch) {
+      console.log("Fetching")
+      await this.loadCells();
+    }
+  }
+
+  async deleteRowRange(startIndex: number, endIndex: number, refetch: boolean = true) {
+    if (startIndex > endIndex) {
+      throw new Error("startIndex needs to be less than endIndex");
+    }
+    startIndex = startIndex + 1;
+    this._ensureRowValid(startIndex);
+    this._ensureRowValid(endIndex);
+    
+    await this._database._requestUpdate('deleteRange', {
+      range: {
+        sheetId: this.sheetId,
+        startRowIndex: startIndex,
+        endRowIndex: endIndex+1
+      },
+      shiftDimension: 'ROWS',
+    });
+
+    if (refetch) {
+      console.log("Fetching")
+      await this.loadCells();
+    }
   }
 }

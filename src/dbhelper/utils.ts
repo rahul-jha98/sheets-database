@@ -30,3 +30,20 @@ export function columnNameToNumber(columnName: string): number {
   }
   return column;
 }
+
+export function reduceRowsToDelete(rowsToDelete: number[]) : number[][] {
+  const rangeRowsToDelete = rowsToDelete.map((rowNo) => [rowNo, rowNo+1]);
+  const reducedRowsToDelete : number[][] = []
+  reducedRowsToDelete.push(rangeRowsToDelete[0])
+  let lastIdx = 0;
+
+  for (let i = 1; i < rangeRowsToDelete.length; i++) {
+    if (reducedRowsToDelete[lastIdx][1] === rangeRowsToDelete[i][0]) {
+      reducedRowsToDelete[lastIdx][1] = rangeRowsToDelete[i][1];
+    } else {
+      reducedRowsToDelete.push(rangeRowsToDelete[i]);
+      lastIdx++;
+    }
+  }
+  return []
+}

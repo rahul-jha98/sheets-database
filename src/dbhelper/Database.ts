@@ -141,14 +141,14 @@ export class Database {
   }
 
 
-  async _requestUpdate(requestType: string, requestParams: any) {
+  async _requestUpdate(requestType: string, requestParams: any, fetchSpreadsheet: boolean = false) {
     const response = await this.axios.post(':batchUpdate', {
       requests: [{[requestType]: requestParams}],
-      includeSpreadsheetInResponse: true,
-      responseIncludeGridData: true,
+      includeSpreadsheetInResponse: fetchSpreadsheet,
+      responseIncludeGridData: fetchSpreadsheet,
     });
-
-    response.data.updatedSpreadsheet.sheets.forEach((s: Sheet) =>
+    console.log(response.data);
+    response.data?.updatedSpreadsheet?.sheets?.forEach((s: Sheet) =>
       this._updateOrCreateTable(s)
     );
 
@@ -186,7 +186,7 @@ export class Database {
 
     const response = await this._requestUpdate('addSheet', {
       properties: properties || {},
-    });
+    }, true);
     // _makeSingleUpdateRequest already adds the sheet
     const newSheetId = response.properties.sheetId;
     const newSheet = this._tables[newSheetId];
@@ -216,7 +216,7 @@ export class Database {
         ...properties
       },
       fields: Object.keys(properties).join(','),
-    });
+    }, true);
     if ('title' in properties) {
       this.notifyAction(ACTIONS.TABLE_RENAMED, tableName, properties['title']);
     }
