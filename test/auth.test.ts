@@ -12,13 +12,6 @@ import type { Table } from '../src/dbhelper/Table';
 const databases: Record<string, SheetDatabase> = load_database();
 const GOOGLE_AUTH_SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets',
-
-  // the list from the sheets v4 auth for spreadsheets.get
-  // 'https://www.googleapis.com/auth/drive',
-  // 'https://www.googleapis.com/auth/drive.readonly',
-  // 'https://www.googleapis.com/auth/drive.file',
-  // 'https://www.googleapis.com/auth/spreadsheets',
-  // 'https://www.googleapis.com/auth/spreadsheets.readonly',
 ];
 
 
@@ -27,7 +20,7 @@ const checkDatabaseOperations= (SHEET_ACCESS: string, options: Record<string, bo
   let table: Table; 
   describe(`For sheet which is ${SHEET_ACCESS}`, () => {
     if (options.canDoReadOperation) {
-
+      
       it('reading database properties should succeed', async () => {
         await database.fetchTablesList(false);
         expect(database.title).toBeTruthy();

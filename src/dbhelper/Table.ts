@@ -21,10 +21,15 @@ export class Table {
     this._cells = [];
     this.columnNames = [];
 
-    if (data) this._fillTableData(data);
+    this._fillTableData(data);
   }
 
-  _fillTableData(dataRanges: Array<SheetData>) {
+  _fillTableData(dataRanges: Array<SheetData>|null|undefined) {
+    if (!dataRanges) {
+      this.isFetchPending = true;
+      return;
+    }
+    this.isFetchPending = false;
     dataRanges.forEach((range: SheetData) => {
 
       const numRows = this.rowCount;
@@ -41,9 +46,9 @@ export class Table {
           ) {
             this.lastRowWithValues = row;
             const cellValue = range.rowData[row].values[column].effectiveValue;
-            this._cells[row][column] = cellValue.numberValue ||
-               cellValue.stringValue ||
-               cellValue.boolValue
+            this._cells[row][column] = cellValue?.numberValue ||
+               cellValue?.stringValue ||
+               cellValue?.boolValue
           }
         }
       }
@@ -149,11 +154,19 @@ export class Table {
       {
         params: options,
       }
-    );
-
+    ); 
+    
     return response.data.values;
   }
 
+  async _setColumnSize(columnCount: number) {
+    return this._database.updateSheetProperties(this.sheetId, {
+      gridProperties: {
+        rowCount: this.rowCount,
+        columnCount: columnCount,
+      },
+    });
+  }
   /**
    * Updates the header values in the sheet
    * @param {Array.<string>} headerValues Name of header values to be set
@@ -162,10 +175,7 @@ export class Table {
     if (!headerValues) return;
 
     if (headerValues.length > this.columnCount) {
-      throw new Error(
-        `Sheet is not large enough to fit ${headerValues.length} columns.` +
-          `Resize the sheet first.`
-      );
+      await this._setColumnSize(headerValues.length);
     }
 
     const trimmedHeaderValues = headerValues.map(h => h.trim());
@@ -223,12 +233,8 @@ export class Table {
   /**
    * Delete the given table
    */
-  async delete() {
-    return this._database.deleteTable(this.sheetId);
-  }
-
   async drop() {
-    return this.delete();
+    await this._database.deleteTable(this.sheetId);
   }
 
   async rename(newName: string) {
@@ -391,5 +397,13 @@ export class Table {
       await this.deleteRowRange(range[0], range[1], false);
     }
     await this.loadCells();
+  }
+
+  async clear() {
+    await this._database.axios.request({
+      method: 'post',
+      url: `/values/${this.encodedA1SheetName}:clear`,
+    });
+    await this.setColumnNames(this.columnNames);
   }
 }

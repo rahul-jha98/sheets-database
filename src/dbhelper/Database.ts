@@ -81,7 +81,7 @@ export class Database {
       this._tables[sheetId] = new Table(this, {properties, data});
     } else {
       this._tables[sheetId]._properties = properties;
-      if (data) this._tables[sheetId]._fillTableData(data);
+      this._tables[sheetId]._fillTableData(data);
     }
   }
 
@@ -176,9 +176,11 @@ export class Database {
       responseIncludeGridData: fetchSpreadsheet,
     });
 
-    response.data?.updatedSpreadsheet?.sheets?.forEach((s: Sheet) =>
-      this._updateOrCreateTable(s)
-    );
+    if (fetchSpreadsheet) {
+      response.data.updatedSpreadsheet.sheets.forEach((s: Sheet) =>
+        this._updateOrCreateTable(s)
+      );
+    }
 
     return response.data.replies[0][requestType];
   }

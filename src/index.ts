@@ -100,7 +100,7 @@ export class SheetDatabase {
    * @param {string} tableName name of the table to drop
    */
   async dropTable(tableName: string) {
-    await this.tables[tableName].delete();
+    await this.getTable(tableName).drop();
   }
 
   /**
@@ -109,7 +109,7 @@ export class SheetDatabase {
    * @param {string} newTableName new name of the table
    */
   async renameTable(tableName:string, newTableName:string) {
-    await this.tables[tableName].rename(newTableName);
+    await this.getTable(tableName).rename(newTableName);
   }
 
   get title() {

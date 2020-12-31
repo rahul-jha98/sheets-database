@@ -7,7 +7,7 @@
   "scripts": {
     "build": "rm -rf lib/ && tsc",
     "start": "npm run build && node lib/src/index.js",
-    "test": "npm run build && jest"
+    "test": "npm run build && jest --runInBand"
   },
   "jest": {
     "testMatch": [ "**/__tests__/**/*.js?(x)", "**/?(*.)+(spec|test).js?(x)" ],
