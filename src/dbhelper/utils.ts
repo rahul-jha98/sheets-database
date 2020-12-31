@@ -53,6 +53,5 @@ export function reduceRowsToDelete(rowsToDelete: number[]) : number[][] {
     reducedRowsToDelete[i]= [a-deletedSoFar, b-deletedSoFar];
     deletedSoFar += toDelete; 
   }
-
   return reducedRowsToDelete;
 }

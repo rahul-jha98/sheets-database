@@ -1,9 +1,9 @@
 import {columnNumberToName, reduceRowsToDelete} from './utils';
-import type {Database} from './Database';
 import {Sheet, SheetData, SheetProperties} from './ResponseStructure';
 
 type primitiveTypes = string | boolean | number | null | undefined;
 type rowData = Array<primitiveTypes>|Record<string, primitiveTypes>
+import type {Database} from './Database';
 
 export class Table {
   _database: Database;
@@ -46,9 +46,17 @@ export class Table {
           ) {
             this.lastRowWithValues = row;
             const cellValue = range.rowData[row].values[column].effectiveValue;
-            this._cells[row][column] = cellValue?.numberValue ||
-               cellValue?.stringValue ||
-               cellValue?.boolValue
+            let value = undefined;
+            if (cellValue) {
+              if (cellValue.numberValue !== undefined) {
+                value = cellValue.numberValue;
+              } else if (cellValue.stringValue !== undefined) {
+                value = cellValue.stringValue;
+              } else if (cellValue.boolValue !== undefined) {
+                value = cellValue.boolValue;
+              }
+            }
+            this._cells[row][column] = value;
           }
         }
       }
@@ -167,6 +175,7 @@ export class Table {
       },
     });
   }
+
   /**
    * Updates the header values in the sheet
    * @param {Array.<string>} headerValues Name of header values to be set
@@ -285,7 +294,6 @@ export class Table {
   async _addRows(rowsArrays: primitiveTypes[][], 
     refetch: boolean = true,
     insert: boolean = false) {
-    console.log(insert, refetch);
     if (!Array.isArray(rowsArrays)) throw new Error('Row values needs to be an array');
 
     if (!this.columnNames) await this.loadColumnNames();
@@ -303,9 +311,7 @@ export class Table {
     });
 
     // if new rows were added, we need update sheet.rowRount
-    console.log("Inserted Values");
     if (refetch) {
-      console.log("Fetching")
       await this.loadCells();
     }
   }
@@ -345,20 +351,7 @@ export class Table {
   }
 
   async deleteRow(idx: number, refetch: boolean = true) {
-    idx = idx + 1;
-    this._ensureRowValid(idx);
-    await this._database._requestUpdate('deleteRange', {
-      range: {
-        sheetId: this.sheetId,
-        startRowIndex: idx,
-        endRowIndex: idx+1
-      },
-      shiftDimension: 'ROWS',
-    });
-    if (refetch) {
-      console.log("Fetching")
-      await this.loadCells();
-    }
+    return this.deleteRowRange(idx, idx+1, refetch);
   }
 
   async deleteRowRange(startIndex: number, endIndex: number, refetch: boolean = true) {
@@ -379,31 +372,52 @@ export class Table {
     });
 
     if (refetch) {
-      console.log("Fetching")
+      console.log("Fetching");
       await this.loadCells();
+    } else {
+      this.isFetchPending = true;
     }
   }
 
   async deleteRows(rows: number[], sorted: boolean = false) {
     if (!sorted) {
-      rows.sort((a, b) => b - a);
+      rows.sort((a, b) => a - b);
     }
     this._ensureRowValid(rows[0] + 1);
     this._ensureRowValid(rows[rows.length - 1] + 1);
     const rowRanges = reduceRowsToDelete(rows);;
 
     for (const range of rowRanges) {
-      console.log("deleting ", range[0], " to ", range[1]);
       await this.deleteRowRange(range[0], range[1], false);
     }
     await this.loadCells();
   }
 
-  async clear() {
+  async deleteRowsWhere(selectionCondition: (rowData: Record<string, primitiveTypes>) => boolean) {
+    const rowsToDelete : number[] = [];
+    const isToBeDeleted = this.getData().map(selectionCondition);
+    isToBeDeleted.forEach((status, rowIdx) => {
+      if(status) {
+        rowsToDelete.push(rowIdx);
+      }
+    });
+    console.log(rowsToDelete);
+    return this.deleteRows(rowsToDelete);
+  }
+
+  async clear(refetch: boolean = true) {
     await this._database.axios.request({
       method: 'post',
-      url: `/values/${this.encodedA1SheetName}:clear`,
+      url: `/values/${this.encodedA1SheetName}!A2:${this.lastColumnLetter+this.rowCount}:clear`,
     });
-    await this.setColumnNames(this.columnNames);
+    if (refetch) {
+      await this.loadCells();
+    } else {
+      this.isFetchPending = true;
+    }
+  }
+
+  get data(){
+    return this.getData();
   }
 }

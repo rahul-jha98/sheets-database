@@ -15,7 +15,7 @@ const GOOGLE_AUTH_SCOPES = [
 
 const database = databases.PRIVATE;
 
-describe('Handle Table CRUD Operations', () => {
+describe("Handle CRUD Operations on Tables", () => {
 
   beforeAll(async () => {
     const jwtClient = new JWT({
