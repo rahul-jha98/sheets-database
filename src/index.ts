@@ -1,6 +1,6 @@
 import {Database} from './dbhelper/Database';
 import {ACTIONS} from './dbhelper/actions';
-import type  {Table} from './dbhelper/Table';
+import type {Table} from './dbhelper/Table';
 
 export class SheetDatabase {
   db: Database;
@@ -39,14 +39,6 @@ export class SheetDatabase {
    */
   useAccessToken(token: string) {
     this.db.useAccessToken(token);
-  }
-
-  /**
-   * Use service account with creds
-   * @param {object} creds Json file
-   */
-  async useServiceAccount(client_email: string, private_key: string) {
-    await this.db.useServiceAccountAuth(client_email, private_key);
   }
 
   /**
