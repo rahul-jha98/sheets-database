@@ -23,7 +23,6 @@ export class Database {
   authMode?: number;
   apiKey?: string;
   accessToken?: string;
-  creds?: Object;
 
   notifyAction: (actionType: number, ...params: string[]) => void = () => {};
 
@@ -31,7 +30,7 @@ export class Database {
    * Interact with the Google Sheet Document
    * @param {string} [sheetId] sheetId of the excel sheet to connect
    */
-  constructor(sheetId: string = '') {
+  constructor(sheetId = '') {
     this.sheetId = sheetId;
     this.axios = axios.create({
       baseURL: `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}`,
@@ -61,17 +60,15 @@ export class Database {
         this._setAuthorizationInRequest.bind(this));
 
     this.axios.interceptors.response.use(
-        this._handleAxiosResponse.bind(this),
-        this._handleAxiosErrors.bind(this),
+        (response) => response,
+        this._onAxiosError.bind(this),
     );
   }
 
   /**
    * @param {function} onActionCallback callback when action happens
    */
-  subscrible(
-      onActionCallback: (actionType: number, ...params: string[]) => void,
-  ) {
+  subscrible(onActionCallback: (actionType: number, ...params: string[]) => void) {
     this.notifyAction = onActionCallback;
   }
 
@@ -93,7 +90,7 @@ export class Database {
    * Make a request to fetch all the table with its data
    * @param {boolean} withData should request sheet data
    */
-  async loadData(withData: boolean = true) {
+  async loadData(withData = true) {
     const response = await this.axios.get('/', {
       params: {
         includeGridData: withData,
@@ -140,10 +137,7 @@ export class Database {
     return config;
   }
 
-  async _handleAxiosResponse(response: AxiosResponse) {
-    return response;
-  }
-  async _handleAxiosErrors(error: AxiosError) {
+  async _onAxiosError(error: AxiosError) {
     if (error.response && error.response.data) {
       // usually the error has a code and message, but occasionally not
       if (!error.response.data.error) throw error;
@@ -162,8 +156,10 @@ export class Database {
   }
 
 
-  async _requestUpdate(requestType: string,
-      requestParams: any, fetchSpreadsheet: boolean = false) {
+  async _requestUpdate(
+      requestType: string,
+      requestParams: any,
+      fetchSpreadsheet = false) {
     const response = await this.axios.post(':batchUpdate', {
       requests: [{[requestType]: requestParams}],
       includeSpreadsheetInResponse: fetchSpreadsheet,

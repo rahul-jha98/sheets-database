@@ -13,8 +13,8 @@ export class Table {
 
 
   columnNames: string[];
-  lastRowWithValues: number = 0;
-  isFetchPending: boolean = true;
+  lastRowWithValues = 0;
+  isFetchPending = true;
 
   constructor(database: Database, {properties, data}: Sheet) {
     this._database = database;

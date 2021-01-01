@@ -1,20 +1,13 @@
 module.exports = {
-  'env': {
-    'es2021': true,
-    'node': true,
+  env: {
+    es2021: true,
+    node: true,
   },
-  'extends': [
-    'google',
+  extends: [
+    'google', 'plugin:@typescript-eslint/recommended',
   ],
-  'parser': '@typescript-eslint/parser',
-  'parserOptions': {
-    'ecmaVersion': 12,
-    'sourceType': 'module',
-  },
-  'plugins': [
-    '@typescript-eslint',
-  ],
-  'rules': {
+  rules: {
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
     'require-jsdoc': ['error', {
       'require': {
         'FunctionDeclaration': false,
@@ -25,4 +18,10 @@ module.exports = {
       },
     }],
   },
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaVersion: 2020,
+    sourceType: 'module',
+  },
+  plugins: ['@typescript-eslint'],
 };
