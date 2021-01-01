@@ -8,6 +8,7 @@ import type {Table} from './dbhelper/Table';
 export class SheetDatabase {
   [key: string]: any;
   _db: Database;
+
   _tables: Record<string, Table>;
 
   /**
@@ -39,7 +40,7 @@ export class SheetDatabase {
     await this._db.loadData(loadTableData);
 
     for (const table of Object.values(this._db.tables)) {
-      await table.loadColumnNames(true);
+      await table.loadColumnNames(false);
       this[table.title] = table;
       this._tables[table.title] = table;
     }
@@ -137,3 +138,4 @@ export class SheetDatabase {
 }
 
 export default SheetDatabase;
+const db = new SheetDatabase();

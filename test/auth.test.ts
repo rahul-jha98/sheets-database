@@ -28,7 +28,7 @@ const checkDatabaseOperations= (SHEET_ACCESS: string, options: Record<string, bo
       });
 
       it('reading table data should succeed', async () => {
-        await table.loadCells();
+        await table.reload();
         expect(table.isFetchPending).toBeFalsy();
       });
 

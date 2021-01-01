@@ -42,7 +42,7 @@ describe("Handle CRUD Operations on Table Entries", () => {
 
   describe('refetching table entries', () => {
     it('can refetch mulitple rows', async () => {
-      await table.loadCells();
+      await table.reload();
       expect(table.getDataArray().length).toBe(INITIAL_DATA.length);
     });
 
