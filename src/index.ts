@@ -70,6 +70,7 @@ export class SheetDatabase {
       gridProperties: {
         rowCount: rowCount,
         columnCount: columnNames.length,
+        frozenRowCount: 1,
       },
       headerValues: columnNames,
     });

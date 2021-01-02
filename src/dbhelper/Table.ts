@@ -57,10 +57,10 @@ export class Table {
 
   /**
    * Loads the column names of the table
-   * @param {boolean} enforceHeaders whether to raise error if headers empty
+   * @param enforceHeaders whether to raise error if headers empty
    */
   async loadColumnNames(enforceHeaders = true) {
-    const rows = await this.getCellsInRange(`A1:${this.lastColumnLetter}1`);
+    const rows = await this._getCellsInRange(`A1:${this.lastColumnLetter}1`);
     if (!rows) {
       if (!enforceHeaders) {
         return;
@@ -81,8 +81,8 @@ export class Table {
 
   /**
    * Set the header values in the sheet to the given values
-   * @param {Array.<string>} headerValues Name of header values to be set
-   * @param {boolean} shrinkTable pass true if you want to shrink table:
+   * @param headerValues Name of header values to be set
+   * @param {boolean} [shrinkTable=false] pass true if you want to shrink table:
    * - Note - It deletes the values beyond length of headers passed
    */
   async setColumnNames(headerValues: string[], shrinkTable = false) {
@@ -120,9 +120,8 @@ export class Table {
       },
     });
     this.columnNames = response.data.updatedData.values[0];
-
     if (shrinkTable && trimmedHeaderValues.length < this.columnCount) {
-      this.shrinkSheetToFitTable();
+      return this.shrinkSheetToFitTable();
     } else {
       for (let i = 0; i < headerValues.length; i++) {
         this._cells[0][i] = headerValues[i];
@@ -140,7 +139,7 @@ export class Table {
 
   /**
    * rename the table to the given name
-   * @param {string} newName New Name of the table
+   * @param newName New Name of the table
    */
   async rename(newName: string) {
     return this._database.updateSheetProperties(this.sheetId, {title: newName});
@@ -187,20 +186,35 @@ export class Table {
     return rowObject;
   }
 
-  async insert(rowValue: rowData | Array<rowData>, refetch = true) {
-    if (Array.isArray(rowValue)) {
-      if (Array.isArray(rowValue[0]) ||
-        (typeof rowValue[0] === 'object' && rowValue[0] != null)) {
-        return this.insertMany(rowValue as rowData[], refetch);
+  /**
+   * insert data (single entry or array of entries) to the table
+   * @param data data to be inserted
+   * @param {boolean} [refetch=true] whether to refetch rows after operation
+   */
+  async insert(data: rowData | Array<rowData>, refetch = true) {
+    if (Array.isArray(data)) {
+      if (Array.isArray(data[0]) ||
+        (typeof data[0] === 'object' && data[0] != null)) {
+        return this.insertMany(data as rowData[], refetch);
       }
     }
-    return this.insertMany([rowValue as rowData], refetch);
+    return this.insertMany([data as rowData], refetch);
   }
 
+  /**
+   * add the single entry to the table
+   * @param rowValue single entry to be inserted in table
+   * @param refetch whether to refetch rows after the operation
+   */
   async insertOne(rowValue: rowData, refetch = true) {
     return this.insertMany([rowValue], refetch=refetch);
   }
 
+  /**
+   * add an array of entries to the table
+   * @param rowValueArray array of entries to be inserted in table
+   * @param refetch whether to refetch rows after the operation
+   */
   async insertMany(rowValueArray: Array<rowData>,
       refetch = true) {
     const rowsArray: primitiveTypes[][] = [];
@@ -236,7 +250,7 @@ export class Table {
   }
 
   /**
-   * 
+   * deletes
    * @param startIndex starting index of range of rows
    * @param endIndex end index of range of rows
    * @param refetch whether to refetch rows after the operation
@@ -259,7 +273,6 @@ export class Table {
     });
 
     if (refetch) {
-      console.log('Fetching');
       await this.reload();
     } else {
       this.isFetchPending = true;
@@ -268,8 +281,8 @@ export class Table {
 
   /**
    * given the current indices delete all the rows from the table
-   * @param rows current indices of of all the rows to delete
-   * @param sorted whether the rows is in sorted format. 
+   * @param {number[]} rows current indices of of all the rows to delete
+   * @param {boolean} sorted whether the rows is in sorted format.
    * - This prevents sort to be explicitly called
    */
   async deleteRows(rows: number[], sorted = false) {
@@ -279,10 +292,18 @@ export class Table {
     this._ensureRowValid(rows[0] + 1);
     this._ensureRowValid(rows[rows.length - 1] + 1);
     const rowRanges = reduceRowsToDelete(rows);
-
+    const requests = [];
     for (const range of rowRanges) {
-      await this.deleteRowRange(range[0], range[1], false);
+      requests.push({'deleteRange': {
+        range: {
+          sheetId: this.sheetId,
+          startRowIndex: range[0] + 1,
+          endRowIndex: range[1] + 1,
+        },
+        shiftDimension: 'ROWS',
+      }});
     }
+    await this._database._requestBatchUpdate(requests);
     await this.reload();
   }
 
@@ -298,13 +319,12 @@ export class Table {
         rowsToDelete.push(rowIdx);
       }
     });
-    console.log(rowsToDelete);
     return this.deleteRows(rowsToDelete);
   }
 
   /**
-   * Clears all the entries from the table
-   * @param refetch whether to refetch the values once operation completes
+   * clears all the entries from the table
+   * @param {boolean} [refetch=true] whether to refetch the values once operation completes
    */
   async clear(refetch = true) {
     await this._database.axios.request({
@@ -318,39 +338,117 @@ export class Table {
     }
   }
 
-  /**
-   *
-   * @param {string} a1Range Range in the form of A1 representation eg: A1:D1
-   * @param {Object} options prameters along with data
-   */
-  async getCellsInRange(a1Range: string, options?: Object) {
-    const response = await this._database.axios.get(
-        `/values/${this.encodedA1SheetName}!${a1Range}`,
-        {
-          params: options,
-        },
-    );
-
-    return response.data.values;
-  }
-
-  async _setColumnSize(columnCount: number) {
+  async shrinkSheetToFitTable() {
     return this._database.updateSheetProperties(this.sheetId, {
       gridProperties: {
-        rowCount: this.rowCount,
-        columnCount: columnCount,
+        rowCount: this._lastRowsWithValues + 2,
+        columnCount: this.columnNames.length,
       },
     });
   }
 
+  // PROPERTY GETTERS \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+  /**
+   * Array of data objects with column names as keys
+   */
+  get data() : Array<Record<string, primitiveTypes>> {
+    return this.getData();
+  }
 
-  async shrinkSheetToFitTable() {
-    this._database.updateSheetProperties(this.sheetId, {
-      gridProperties: {
-        rowCount: this._lastRowsWithValues +
-     2,
-        columnCount: this.columnNames.length,
-      },
+  /**
+   * sheetId of the given table
+   */
+  get sheetId() : number {
+    return this._getProperty('sheetId');
+  }
+
+  /**
+   * name of the given table
+   */
+  get title() : string {
+    return this._getProperty('title');
+  }
+
+  /**
+   * index of the table (worksheet) in google sheet document
+   */
+  get index() : number {
+    return this._getProperty('index');
+  }
+  /**
+   * name of the given table
+   */
+  get name() : string {
+    return this.title;
+  }
+
+  /**
+   * Properites of the table grid
+   */
+  get gridProperties() {
+    return this._getProperty('gridProperties');
+  }
+
+  /**
+   * nubmer of rows in grid
+   */
+  get rowCount() : number {
+    return this.gridProperties.rowCount;
+  }
+
+  /**
+   * number of columns in grid
+   */
+  get columnCount() : number {
+    return this.gridProperties.columnCount;
+  }
+
+  /**
+   * name of the given sheet
+   */
+  get a1SheetName() : string {
+    return `'${this.title.replace(/'/g, '\'\'')}'`;
+  }
+  /**
+   * sheet name to be passed as params in API calls
+   */
+  get encodedA1SheetName() : string {
+    return encodeURIComponent(this.a1SheetName);
+  }
+
+  /**
+   * Column letter of the last column in grid
+   */
+  get lastColumnLetter() : string {
+    return columnNumberToName(this.columnCount);
+  }
+
+  // HELPER PRIVATE FUNCTIONS \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+  _getProperty(propertyName: string) {
+    return this._properties[propertyName];
+  }
+
+  /**
+   * @private
+   * @param a1Range Range in the form of A1 representation eg: A1:D1
+   * @param options prameters along with data
+   */
+  async _getCellsInRange(a1Range: string) {
+    const response = await this._database.axios.get(
+        `/values/${this.encodedA1SheetName}!${a1Range}`);
+    return response.data.values;
+  }
+
+  /**
+   * resize the number of columns
+   * @param columnCount new value of column count
+   */
+  async _setColumnSize(columnCount: number) {
+    const gridProperties = this.gridProperties;
+    gridProperties.rowCount = this.rowCount;
+    gridProperties.columnCount = columnCount;
+    return this._database.updateSheetProperties(this.sheetId, {
+      gridProperties,
     });
   }
 
@@ -425,89 +523,9 @@ export class Table {
    * @param idx actual index of the row we need to access
    */
   _ensureRowValid(idx: number) {
-    if (idx > this._lastRowsWithValues ||
-   idx < 1) {
-      throw new Error(`Cannot operate on row index ${idx-1} from table with ${this._lastRowsWithValues
-      } entries`);
+    if (idx > this._lastRowsWithValues || idx < 1) {
+      throw new Error(`Cannot operate on row index ${idx-1} from table with ${
+        this._lastRowsWithValues} entries`);
     }
-  }
-
-  /**
-   * Array of data objects with column names as keys
-   */
-  get data() {
-    return this.getData();
-  }
-
-  _getProperty(propertyName: string) {
-    return this._properties[propertyName];
-  }
-
-  /**
-   * sheetId of the given table
-   */
-  get sheetId() {
-    return this._getProperty('sheetId');
-  }
-
-  /**
-   * name of the given table
-   */
-  get title() {
-    return this._getProperty('title');
-  }
-
-  /**
-   * index of the table (worksheet) in google sheet document
-   */
-  get index() {
-    return this._getProperty('index');
-  }
-  /**
-   * name of the given table
-   */
-  get name() {
-    return this.title;
-  }
-
-  /**
-   * Properites of the table grid
-   */
-  get gridProperties() {
-    return this._getProperty('gridProperties');
-  }
-
-  /**
-   * nubmer of rows in grid
-   */
-  get rowCount() {
-    return this.gridProperties.rowCount;
-  }
-
-  /**
-   * number of columns in grid
-   */
-  get columnCount() {
-    return this.gridProperties.columnCount;
-  }
-
-  /**
-   * name of the given sheet
-   */
-  get a1SheetName() {
-    return `'${this.title.replace(/'/g, '\'\'')}'`;
-  }
-  /**
-   * sheet name to be passed as params in API calls
-   */
-  get encodedA1SheetName() {
-    return encodeURIComponent(this.a1SheetName);
-  }
-
-  /**
-   * Column letter of the last column in grid
-   */
-  get lastColumnLetter() {
-    return columnNumberToName(this.columnCount);
   }
 }

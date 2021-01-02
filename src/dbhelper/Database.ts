@@ -175,6 +175,12 @@ export class Database {
     return response.data.replies[0][requestType];
   }
 
+  async _requestBatchUpdate(requests: any) {
+    const response = await this.axios.post(':batchUpdate', {
+      requests,
+    });
+  }
+
 
   get tables() {
     return this._tables;

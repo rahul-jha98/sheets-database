@@ -17,6 +17,15 @@ module.exports = {
         'FunctionExpression': false,
       },
     }],
+    'max-len': ['error', {
+      'ignoreComments': true,
+      'ignoreStrings': true,
+      'code': 100,
+    }],
+    'valid-jsdoc': ['error', {
+      'requireParamType': false,
+      'requireReturn': false,
+    }],
   },
   parser: '@typescript-eslint/parser',
   parserOptions: {
