@@ -15,13 +15,13 @@ const GOOGLE_AUTH_SCOPES = [
 const database = databases.PRIVATE;
 
 let table : Table;
-let tableName = `tableEntries${new Date().getTime()}`
+const tableName = `tableEntries${new Date().getTime()}`;
 
 const INITIAL_COLUMN_NAMES = ['index', 'letter', 'rowNo'];
 
-const INITIAL_DATA = [1, 2, 3, 4, 5, 6].map(number => [number-1, `row${number-1}`, number]);
+const INITIAL_DATA = [1, 2, 3, 4, 5, 6].map((number) => [number-1, `row${number-1}`, number]);
 
-describe("Handle CRUD Operations on Table Entries", () => {
+describe('Handle CRUD Operations on Table Entries', () => {
   beforeAll(async () => {
     const jwtClient = new JWT({
       email: creds.client_email,
@@ -52,7 +52,7 @@ describe("Handle CRUD Operations on Table Entries", () => {
     });
   });
 
-  describe("inserting values to table", () => {
+  describe('inserting values to table', () => {
     it('can insert row based on array', async () => {
       const dataCount = table.getDataArray().length;
       const data = [dataCount, `letter${dataCount}`, dataCount + 1];
@@ -75,25 +75,25 @@ describe("Handle CRUD Operations on Table Entries", () => {
     });
   });
 
-  describe("deleting entries from table", () => {
-    it("can delete single row", async () => {
+  describe('deleting entries from table', () => {
+    it('can delete single row', async () => {
       const rowNo = table.getDataArray().length - 2;
       await table.deleteRow(rowNo);
-      expect(table.getDataArray().length).toBe(rowNo+1)
+      expect(table.getDataArray().length).toBe(rowNo+1);
     });
 
-    it("can delete row range", async () => {
+    it('can delete row range', async () => {
       expect(table.getDataArray()[0][0]).toBe(INITIAL_DATA[0][0]);
       await table.deleteRowRange(0, 3);
       expect(table.getDataArray()[0][0]).toBe(INITIAL_DATA[3][0]);
     });
 
-    it("can clear all entries", async () => {
+    it('can clear all entries', async () => {
       await table.clear();
       expect(table.getDataArray().length).toBe(0);
-    })
+    });
 
-    it("can delete based on condition", async () => {
+    it('can delete based on condition', async () => {
       await table.insert(INITIAL_DATA);
       expect(table.getDataArray().length).toBe(INITIAL_DATA.length);
       await table.deleteRowsWhere((data) => data.index as number % 2 === 0);
@@ -101,5 +101,14 @@ describe("Handle CRUD Operations on Table Entries", () => {
     });
   });
 
-
+  describe('updating entries', () => {
+    it('can update rows using array', async () => {
+      await table.updateRow(0, [1, null, null]);
+      expect(table.getRow(0).index).toBe(1);
+    });
+    it('can update rows using objects', async() => {
+      await table.updateRow(0, {letter: 'changed'});
+      expect(table.getRow(0).letter).toBe('changed');
+    });
+  });
 });

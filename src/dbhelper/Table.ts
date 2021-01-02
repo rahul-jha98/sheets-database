@@ -322,6 +322,55 @@ export class Table {
     return this.deleteRows(rowsToDelete);
   }
 
+  async updateRow(rowIdx: number, updates: rowData) {
+    let updatedRow: primitiveTypes[] = [];
+    if (Array.isArray(updates)) {
+      updatedRow = updates;
+    } else {
+      this.columnNames.forEach((name, idx) => {
+        if (updates.hasOwnProperty(name)) {
+          updatedRow[idx] = updates[name];
+        } else {
+          updatedRow[idx] = null;
+        }
+      });
+    }
+    const endColumn = columnNumberToName(this.columnNames.length);
+    const rowRange = `${this.encodedA1SheetName}!A${rowIdx+2}:${endColumn}${rowIdx+2}`;
+    // await this._database.axios.request({
+    //   method: 'PUT',
+    //   url: `values/${rowRange}`,
+    //   params: {
+    //     valueInputOption: 'RAW',
+    //     includeValuesInResponse: true,
+    //   },
+    //   data: {
+    //     range: rowRange,
+    //     majorDimension: 'ROWS',
+    //     values: [updatedRow],
+    //   },
+    // });
+
+    const response = await this._database.axios.request({
+      method: 'POST',
+      url: `values:batchUpdate`,
+      data: {
+        includeValuesInResponse: true,
+        valueInputOption: 'RAW',
+        data: [{
+          range: rowRange,
+          majorDimension: 'ROWS',
+          values: [updatedRow],
+        }],
+      },
+    });
+    for (let i = 0; i < updatedRow.length; i++) {
+      if (updatedRow[i] !== null) {
+        this._cells[rowIdx+1][i] = updatedRow[i];
+      }
+    }
+  }
+
   /**
    * clears all the entries from the table
    * @param {boolean} [refetch=true] whether to refetch the values once operation completes

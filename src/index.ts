@@ -32,9 +32,12 @@ export class SheetDatabase {
     });
   }
 
+  async sync() {
+    return this.fetchTablesList();
+  }
   /**
-   * Fetches the tables (worksheets) from the connected sheet
-   * @param {boolean} loadTableData whether the table data should also be loaded
+   * fetches the tables (worksheets) from the connected sheet
+   * @param {boolean} [loadTableData=true] whether the table data should also be loaded
    */
   async fetchTablesList(loadTableData = true) {
     await this._db.loadData(loadTableData);
@@ -63,6 +66,7 @@ export class SheetDatabase {
    * @param {string} tableName name of the table to add
    * @param {Array.<string>} columnNames list with all the column names
    * @param {number} [rowCount=20] initial number or rows
+   * @return {Promise<Table>} A promise to return the added table object
    */
   async addTable(tableName: string, columnNames: string[], rowCount = 20) {
     const table = await this._db.addTable({
@@ -98,24 +102,27 @@ export class SheetDatabase {
   }
 
   /**
-   * Title of the Sheet Document
+   * title of the Sheet Document
    */
-  get title() {
-    return this._db.title;
+  get title() : string {
+    if (this._db.title) {
+      return this._db.title;
+    }
+    throw new Error('Must call sync() once before accessing title');
   }
 
   /**
-   * Array of tables sorted by their order in the Google Sheet
+   * array of tables sorted by their order in the Google Sheet
    */
-  get tablesByIndex() {
+  get tablesByIndex() : Table[] {
     return [...Object.values(this._tables)]
         .sort((tab1, tab2) => tab1.index - tab2.index);
   }
 
   /**
-   * Object of tables indexed by their table name
+   * object of tables indexed by their table name
    */
-  get tables() {
+  get tables() : {[tableName : string]: Table} {
     return this._tables;
   }
 
@@ -139,4 +146,3 @@ export class SheetDatabase {
 }
 
 export default SheetDatabase;
-const db = new SheetDatabase();

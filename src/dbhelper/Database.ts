@@ -14,12 +14,28 @@ const AUTH_MODE = {
  * @class
  */
 export class Database {
+  /**
+   * @description
+   * sheetId of the connected sheet document
+   */
   sheetId: string;
+  /**
+   * @description
+   * title of the sheet document
+   */
   title?: string;
 
-  _tables: Record<number, Table> = {};
+  /**
+   * @private
+   * @description
+   * object with tables connected by sheetId
+   */
+  _tables:{[sheetId: number]: Table} = {};
+  /**
+   * @description
+   * axios instance to make requests
+   */
   axios: AxiosInstance;
-
   authMode?: number;
   apiKey?: string;
   accessToken?: string;
@@ -27,7 +43,6 @@ export class Database {
   notifyAction: (actionType: number, ...params: string[]) => void = () => {};
 
   /**
-   * Interact with the Google Sheet Document
    * @param {string} [sheetId] sheetId of the excel sheet to connect
    */
   constructor(sheetId = '') {
