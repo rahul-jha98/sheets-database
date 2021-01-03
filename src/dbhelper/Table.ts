@@ -3,6 +3,8 @@ import {Sheet, SheetData, SheetProperties} from './ResponseStructure';
 
 type primitiveTypes = string | boolean | number | null | undefined;
 type rowData = Array<primitiveTypes>|Record<string, primitiveTypes>
+type updateFunction = (data?: Record<string, primitiveTypes>, idx?: number) => Record<string, primitiveTypes>
+
 import type {Database} from './Database';
 
 export class Table {
@@ -337,21 +339,8 @@ export class Table {
     }
     const endColumn = columnNumberToName(this.columnNames.length);
     const rowRange = `${this.encodedA1SheetName}!A${rowIdx+2}:${endColumn}${rowIdx+2}`;
-    // await this._database.axios.request({
-    //   method: 'PUT',
-    //   url: `values/${rowRange}`,
-    //   params: {
-    //     valueInputOption: 'RAW',
-    //     includeValuesInResponse: true,
-    //   },
-    //   data: {
-    //     range: rowRange,
-    //     majorDimension: 'ROWS',
-    //     values: [updatedRow],
-    //   },
-    // });
 
-    const response = await this._database.axios.request({
+    await this._database.axios.request({
       method: 'POST',
       url: `values:batchUpdate`,
       data: {
@@ -371,6 +360,52 @@ export class Table {
     }
   }
 
+  async updateRows(rowIndices: number[], updateGenerator : updateFunction) {
+    const endColumn = columnNumberToName(this.columnNames.length);
+    const encodedA1SheetName = this.encodedA1SheetName;
+    const columnNames = this.columnNames;
+
+    const updates = rowIndices.map((rowIdx) => updateGenerator(this.getRow(rowIdx), rowIdx));
+
+    const data = updates.map((update, idx) => {
+      const rowRange = `${encodedA1SheetName}!A${idx+2}:${endColumn}${idx+2}`;
+      const updatedRow = columnNames.map((name) => {
+        if (update.hasOwnProperty(name)) {
+          return update[name];
+        } else {
+          return null;
+        }
+      });
+      return {
+        range: rowRange,
+        majorDimension: 'ROWS',
+        values: [updatedRow],
+      };
+    });
+
+    await this._database.axios.request({
+      method: 'POST',
+      url: `values:batchUpdate`,
+      data: {
+        includeValuesInResponse: true,
+        valueInputOption: 'RAW',
+        data,
+      },
+    });
+  }
+
+  async updateRowsWhere(
+      selectionCondition: (rowData?: Record<string, primitiveTypes>, index?: number) => boolean,
+      updateGenerator: updateFunction) {
+    const rowsToDelete : number[] = [];
+    const isToBeDeleted = this.getData().map(selectionCondition);
+    isToBeDeleted.forEach((status, rowIdx) => {
+      if (status) {
+        rowsToDelete.push(rowIdx);
+      }
+    });
+    return this.updateRows(rowsToDelete, updateGenerator);
+  }
   /**
    * clears all the entries from the table
    * @param {boolean} [refetch=true] whether to refetch the values once operation completes
