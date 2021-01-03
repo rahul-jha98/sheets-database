@@ -7,7 +7,10 @@ table th { text-align: left; }
   margin-bottom: .5em;
   display: block;
 }
-
+.sidebar h1 {
+  margin-left: 1em;
+  margin-right: 1em;
+}
 h3 code { font-size: inherit !important; }
 h4 code { font-size: inherit !important; color: unset; }
 
@@ -32,6 +35,8 @@ h4[id^="method-"] + blockquote {
 :root {
   --theme-color: #43A047;
   --theme-color-dark: #43A047;
+
+  font-family: 'roboto';
 }
 h4[id^="method-"] a code {
   /* color: unset; */

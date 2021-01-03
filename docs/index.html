@@ -3,23 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <title>google-sheets-db</title>
+  <meta
+      name="description"
+      content="Simple and Intutive library to help use Google Sheets as Database"
+    />
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-  <meta name="description" content="Description">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+
+  <link rel="icon" href="assets/imgs/favicon.svg" type="image/x-icon"/>
+  <link rel="stylesheet" href="//unpkg.com/docsify/themes/vue.css">
+
   <link rel="stylesheet" href="./assets/style.css" />
 </head>
 <body>
   <div id="app"></div>
   <script>
     window.$docsify = {
+      auto2top: true,
       name: 'google-sheets-db',
       repo: 'https://github.com/rahul-jha98/google-sheets-db',
       loadSidebar: true,
       subMaxLevel: 4,
+      logo:'./assets/imgs/logo.svg'
     }
   </script>
-  <!-- Docsify v4 -->
-  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+  <script src="//unpkg.com/docsify/lib/docsify.js"></script>
 </body>
 </html>
