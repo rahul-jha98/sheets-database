@@ -1,14 +1,22 @@
 import axios, {
-  AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse,
+  AxiosError, AxiosInstance, AxiosRequestConfig,
 } from 'axios';
+import {JWT} from 'google-auth-library';
 import {ACTIONS} from './actions';
 import {Sheet} from './ResponseStructure';
 import {Table} from './Table';
+import type {OAuth2Client} from 'google-auth-library';
 
 const AUTH_MODE = {
   ACCESS_TOKEN: 1,
   API_KEY: 2,
+  SERVICE_ACCOUNT: 3,
+  OAUTH: 4,
 };
+
+const GOOGLE_AUTH_SCOPES = [
+  'https://www.googleapis.com/auth/spreadsheets',
+];
 
 /**
  * @class
@@ -39,6 +47,8 @@ export class Database {
   authMode?: number;
   apiKey?: string;
   accessToken?: string;
+  jwtClient?: JWT;
+  oAuth2Client?: OAuth2Client;
 
   notifyAction: (actionType: number, ...params: string[]) => void = () => {};
 
@@ -136,6 +146,21 @@ export class Database {
     this.accessToken = token;
   }
 
+  async useServiceAccount(email: string, privateKey: string) {
+    this.jwtClient = new JWT({
+      email: email,
+      key: privateKey,
+      scopes: GOOGLE_AUTH_SCOPES,
+    });
+    await this.jwtClient.authorize();
+    this.authMode = AUTH_MODE.SERVICE_ACCOUNT;
+  }
+
+  useOAuth2Client(oAuth2Client: OAuth2Client) {
+    this.authMode = AUTH_MODE.OAUTH;
+    this.oAuth2Client = oAuth2Client;
+  }
+
   async _setAuthorizationInRequest(
       config: AxiosRequestConfig,
   ): Promise<AxiosRequestConfig> {
@@ -146,6 +171,14 @@ export class Database {
       if (!this.apiKey) throw new Error('Please set API key');
       config.params = config.params || {};
       config.params.key = this.apiKey;
+    } else if (this.authMode === AUTH_MODE.SERVICE_ACCOUNT) {
+      if (!this.jwtClient) throw new Error('JWT Auth not set up properly');
+      await this.jwtClient.authorize();
+      config.headers.Authorization = `Bearer ${this.jwtClient.credentials.access_token}`;
+    } else if (this.authMode === AUTH_MODE.OAUTH) {
+      if (!this.oAuth2Client) throw new Error('OAuth Client was not set up properly');
+      const credentials = await this.oAuth2Client.getAccessToken();
+      config.headers.Authorization = `Bearer ${credentials.token}`;
     } else {
       throw new Error('You need to set up some kind of authorization');
     }

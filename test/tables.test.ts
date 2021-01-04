@@ -29,7 +29,7 @@ describe("Handle CRUD Operations on Tables", () => {
   });
 
   it('can fetch Tables Data', async () => {
-    await database.fetchTablesList();
+    await database.sync();
   });
   
   describe('adding tables and modify its properties', () => {
@@ -59,7 +59,7 @@ describe("Handle CRUD Operations on Tables", () => {
   describe('updating table properties', () => {
     
     it('can rename tables', async () => {
-      await database.fetchTablesList();
+      await database.sync();
       let numTables = database.tablesByIndex.length;
       const oldTableName = `toRename${new Date().getTime()}`;
       await database.addTable(oldTableName, ['temp', 'data']);
@@ -72,8 +72,8 @@ describe("Handle CRUD Operations on Tables", () => {
     });
 
     it('can resize when renaming column names', async () => {
-      await database.fetchTablesList();
-      let numTables = database.tablesByIndex.length;
+      await database.sync();
+      const numTables = database.tablesByIndex.length;
       const tableName = `toRenameHeaders${new Date().getTime()}`;
       await database.addTable(tableName, ['temp', 'data']);
       expect(database.tablesByIndex.length).toBe(numTables + 1);
@@ -85,7 +85,7 @@ describe("Handle CRUD Operations on Tables", () => {
 
   describe('deleting tables', () => {
     it('can drop tables', async () => {
-      await database.fetchTablesList();
+      await database.sync();
       let numTables = database.tablesByIndex.length;
       const tableName = `toDelete${new Date().getTime()}`;
       let table = await database.addTable(tableName, ['temp', 'data ']);

@@ -26,6 +26,7 @@ module.exports = {
       'requireParamType': false,
       'requireReturn': false,
     }],
+    'camelcase': ['off'],
   },
   parser: '@typescript-eslint/parser',
   parserOptions: {

@@ -1,7 +1,7 @@
 import {Database} from './dbhelper/Database';
 import {ACTIONS} from './dbhelper/actions';
 import type {Table} from './dbhelper/Table';
-
+import type {OAuth2Client} from 'google-auth-library';
 /**
  * @class
  */
@@ -32,15 +32,13 @@ export class SheetDatabase {
     });
   }
 
-  async sync() {
-    return this.fetchTablesList();
-  }
+
   /**
    * fetches the tables (worksheets) from the connected sheet
-   * @param {boolean} [loadTableData=true] whether the table data should also be loaded
+   * @param {boolean} [syncTableEntries=true] whether the table data should also be loaded
    */
-  async fetchTablesList(loadTableData = true) {
-    await this._db.loadData(loadTableData);
+  async sync(syncTableEntries = true) {
+    await this._db.loadData(syncTableEntries);
 
     for (const table of Object.values(this._db.tables)) {
       await table.loadColumnNames(false);
@@ -142,6 +140,14 @@ export class SheetDatabase {
    */
   useAccessToken(token: string) {
     this._db.useAccessToken(token);
+  }
+
+  async useServiceAccount(credentials: {client_email: string, private_key: string}) {
+    return this._db.useServiceAccount(credentials.client_email, credentials.private_key);
+  }
+
+  useOAuth2Client(oAuth2Client: OAuth2Client) {
+    this._db.useOAuth2Client(oAuth2Client);
   }
 }
 
