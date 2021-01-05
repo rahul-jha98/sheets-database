@@ -1,12 +1,6 @@
 table th { text-align: left; }
 
-.content h1:before {
-  font-size: 14px;
-  font-weight: normal;
-  font-style: italic;
-  margin-bottom: .5em;
-  display: block;
-}
+
 .sidebar h1 {
   margin-left: 1em;
   margin-right: 1em;

@@ -1,7 +1,6 @@
 <!-- docs/_sidebar.md -->
-
 * **Getting Started**
-  * [Overview](/)
+  * [Overview](/ "google-sheets-db")
   * [Authentication](getting-started/authentication)
 * **Class Documentation**
   * [SheetDatabase](classdocs/sheetdatabase)
