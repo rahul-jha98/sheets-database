@@ -38,6 +38,32 @@ Param|Type|Required|Description
 
 - ✨ **Side effects** - all requests will now authenticate using this api key only
 
+> See [Getting Started > Authentication > API Key](getting-started/authentication#api-key) for more details
+
+#### `useServiceAccountAuth(creds)` (async) :id=method-useServiceAccountAuth
+> Initialize JWT-style auth for [google service account](https://cloud.google.com/iam/docs/service-accounts)
+
+Param|Type|Required|Description
+---|---|---|---
+`creds`|Object|✅|Object containing credendtials from google for your service account<br>_usually just `require` the json file google gives you_
+`creds.client_email`|String<br>_email_|✅|The email of your service account
+`creds.private_key`|String|✅|The private key for your service account
+
+- ✨ **Side effects** - all requests will now authenticate using these credentials
+
+> See [Getting Started > Authentication > Service Account](getting-started/authentication#service-account) for more details
+
+#### `useOAuth2Client(oAuth2Client)` :id=method-useOAuth2Client
+> Use [Google's OAuth2Client](https://github.com/googleapis/google-auth-library-nodejs#oauth2) to authenticate on behalf of a user
+
+Param|Type|Required|Description
+---|---|---|---
+`oAuth2Client`|OAuth2Client|✅|Configured OAuth2Client
+
+- ✨ **Side effects** - requests will use oauth access token to authenticate requests. New access token will be generated if token is expired.
+
+> See [Getting Started > Authentication > OAuth Login](getting-started/authentication#oauth) for more details
+
 #### `useAccessToken(token)` :id=method-useAccessToken
 > Set access token to use for auth
 
@@ -49,6 +75,7 @@ Param|Type|Required|Description
 
 !> This assumes you are creating and managing/refreshing the token yourself.
 
+> See [Getting Started > Authentication > Access Token](getting-started/authentication#aceess-token) for more details
 ### Load data from Sheet
 
 #### `sync(syncTableEntries)` (async) :id=method-sync

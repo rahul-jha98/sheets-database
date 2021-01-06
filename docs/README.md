@@ -3,7 +3,7 @@ _Welcome to the documentation site for_
   <img alt="logo" src="./assets/imgs/logo.svg" width="580">
 </p>
 
-[![License](https://img.shields.io/badge/license-MIT-green)](https://www.npmtrends.com/google-spreadsheet)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://raw.githubusercontent.com/rahul-jha98/google-sheets-db/main/LICENSE)
 
 > Library to help use a Google Sheet as an database
 
@@ -59,7 +59,6 @@ await db.dropTable('newTable2');
 More info:
 - [Authentication](https://rahul-jha98.github.io//#/getting-started/authentication)
 - [SheetDatabase](https://rahul-jha98.github.io/google-sheets-db//#/classdocs/sheetdatabase)
-- [Table](https://rahul-jha98.github.io/google-sheets-db//#/classdocs/table)
 
 
 ### Working with Table Entries
@@ -112,6 +111,8 @@ console.log(table.getData());
  * ]
  */
 ```
+More Info:
+- [Table](https://rahul-jha98.github.io/google-sheets-db//#/classdocs/table)
 
 
 ## Contributions

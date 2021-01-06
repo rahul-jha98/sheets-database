@@ -2,8 +2,9 @@ import {columnNumberToName, reduceRowsToDelete} from './utils';
 import {Sheet, SheetData, SheetProperties} from './ResponseStructure';
 
 type primitiveTypes = string | boolean | number | null | undefined;
-type rowData = Array<primitiveTypes>|Record<string, primitiveTypes>
-type updateFunction = (data?: Record<string, primitiveTypes>, idx?: number) => Record<string, primitiveTypes>
+type rowDataObject = Record<string, primitiveTypes>;
+type rowData = Array<primitiveTypes>|rowDataObject
+type updateFunction = (data?: rowDataObject, idx?: number) => rowDataObject
 
 import type {Database} from './Database';
 
@@ -104,13 +105,13 @@ export class Table {
 
     const response = await this._database.axios.request({
       method: 'put',
-      url: `/values/${this.encodedA1SheetName}!1:1`,
+      url: `/values/${this._endoedA1SheetName}!1:1`,
       params: {
         valueInputOption: 'USER_ENTERED', // other option is RAW
         includeValuesInResponse: true,
       },
       data: {
-        range: `${this.a1SheetName}!1:1`,
+        range: `${this._a1SheetName}!1:1`,
         majorDimension: 'ROWS',
         values: [
           [
@@ -135,7 +136,7 @@ export class Table {
    * refetch the data of the table
    */
   async reload() {
-    await this._database.loadCells(this.a1SheetName);
+    await this._database.loadCells(this._a1SheetName);
     this.isFetchPending = false;
   }
 
@@ -311,11 +312,12 @@ export class Table {
 
   /**
    * Delete rows which match the given criteria
-   * @param selectionCondition condition which will be used to select which rows to delete
+   * @param selectFunction condition which will be used to select which rows to delete
    */
-  async deleteRowsWhere(selectionCondition: (rowData: Record<string, primitiveTypes>) => boolean) {
+  async deleteRowsWhere(selectFunction: (rowData: Record<string, primitiveTypes>,
+      rowIdx: number) => boolean) {
     const rowsToDelete : number[] = [];
-    const isToBeDeleted = this.getData().map(selectionCondition);
+    const isToBeDeleted = this.getData().map(selectFunction);
     isToBeDeleted.forEach((status, rowIdx) => {
       if (status) {
         rowsToDelete.push(rowIdx);
@@ -338,7 +340,7 @@ export class Table {
       });
     }
     const endColumn = columnNumberToName(this.columnNames.length);
-    const rowRange = `${this.encodedA1SheetName}!A${rowIdx+2}:${endColumn}${rowIdx+2}`;
+    const rowRange = `${this._endoedA1SheetName}!A${rowIdx+2}:${endColumn}${rowIdx+2}`;
 
     await this._database.axios.request({
       method: 'POST',
@@ -362,7 +364,7 @@ export class Table {
 
   async updateRows(rowIndices: number[], updateGenerator : updateFunction) {
     const endColumn = columnNumberToName(this.columnNames.length);
-    const encodedA1SheetName = this.encodedA1SheetName;
+    const encodedA1SheetName = this._endoedA1SheetName;
     const columnNames = this.columnNames;
 
     const updates = rowIndices.map((rowIdx) => updateGenerator(this.getRow(rowIdx), rowIdx));
@@ -413,7 +415,7 @@ export class Table {
   async clear(refetch = true) {
     await this._database.axios.request({
       method: 'post',
-      url: `/values/${this.encodedA1SheetName}!A2:${this.lastColumnLetter+this.rowCount}:clear`,
+      url: `/values/${this._endoedA1SheetName}!A2:${this.lastColumnLetter+this.rowCount}:clear`,
     });
     if (refetch) {
       await this.reload();
@@ -467,9 +469,16 @@ export class Table {
   }
 
   /**
+   * Number of entreis in the table
+   */
+  get length(): number {
+    return this._lastRowsWithValues - 1;
+  }
+
+  /**
    * Properites of the table grid
    */
-  get gridProperties() {
+  get _gridProperties() {
     return this._getProperty('gridProperties');
   }
 
@@ -477,27 +486,27 @@ export class Table {
    * nubmer of rows in grid
    */
   get rowCount() : number {
-    return this.gridProperties.rowCount;
+    return this._gridProperties.rowCount;
   }
 
   /**
    * number of columns in grid
    */
   get columnCount() : number {
-    return this.gridProperties.columnCount;
+    return this._gridProperties.columnCount;
   }
 
   /**
    * name of the given sheet
    */
-  get a1SheetName() : string {
+  get _a1SheetName() : string {
     return `'${this.title.replace(/'/g, '\'\'')}'`;
   }
   /**
    * sheet name to be passed as params in API calls
    */
-  get encodedA1SheetName() : string {
-    return encodeURIComponent(this.a1SheetName);
+  get _endoedA1SheetName() : string {
+    return encodeURIComponent(this._a1SheetName);
   }
 
   /**
@@ -519,7 +528,7 @@ export class Table {
    */
   async _getCellsInRange(a1Range: string) {
     const response = await this._database.axios.get(
-        `/values/${this.encodedA1SheetName}!${a1Range}`);
+        `/values/${this._endoedA1SheetName}!${a1Range}`);
     return response.data.values;
   }
 
@@ -528,7 +537,7 @@ export class Table {
    * @param columnCount new value of column count
    */
   async _setColumnSize(columnCount: number) {
-    const gridProperties = this.gridProperties;
+    const gridProperties = this._gridProperties;
     gridProperties.rowCount = this.rowCount;
     gridProperties.columnCount = columnCount;
     return this._database.updateSheetProperties(this.sheetId, {
@@ -584,7 +593,7 @@ export class Table {
 
     await this._database.axios.request({
       method: 'post',
-      url: `/values/${this.encodedA1SheetName}!A1:append`,
+      url: `/values/${this._endoedA1SheetName}!A1:append`,
       params: {
         valueInputOption: 'RAW',
         insertDataOption: insert ? 'INSERT_ROWS' : 'OVERWRITE',
