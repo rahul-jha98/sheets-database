@@ -108,7 +108,7 @@ Param|Type|Required|Description
 - ✨ **Side effects** - table is accessible via (`db.tablesByIndex`, `db.tables`, `db.getTable()`)
 
 #### `dropTable(tableName)` (async) :id=method-dropTable
-> drops the table with the given name 
+> drop the table with the given name 
 
 Param|Type|Required|Description
 ---|---|---|---
@@ -117,8 +117,8 @@ Param|Type|Required|Description
 
 !> If no table with given table name if found it throws an error
 
-#### `renameTable(tableName, newTableName)` (async) :id=method-dropTable
-> drops the table with the given name 
+#### `renameTable(tableName, newTableName)` (async) :id=method-renameTable
+> rename the table with the given name 
 
 Param|Type|Required|Description
 ---|---|---|---
