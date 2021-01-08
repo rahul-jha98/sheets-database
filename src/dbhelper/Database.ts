@@ -6,6 +6,7 @@ import {ACTIONS} from './actions';
 import {Sheet} from './ResponseStructure';
 import {Table} from './Table';
 import type {OAuth2Client} from 'google-auth-library';
+import {checkIfNameValid} from './utils';
 
 const AUTH_MODE = {
   ACCESS_TOKEN: 1,
@@ -240,7 +241,11 @@ export class Database {
    */
   async addTable(properties: Record<string, any>) : Promise<Table> {
     // https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#AddSheetRequest
+    if (!checkIfNameValid(properties.title)) {
+      throw new Error(`Table names can only consist of letters, numbers and underscores`);
+    }
     const headerValues = properties['headerValues'];
+    this._validateColumnNames(headerValues);
 
     delete properties['headerValues'];
 
@@ -277,6 +282,11 @@ export class Database {
    * @param {Object} properties Properties that needs to be updated
    */
   async updateSheetProperties(sheetId: number, properties: Object) {
+    if ('title' in properties) {
+      if (!checkIfNameValid(properties['title'])) {
+        throw new Error(`Table names can only consist of letters, numbers and underscores`);
+      }
+    }
     const tableName = this._tables[sheetId].name;
     await this._requestUpdate('updateSheetProperties', {
       properties: {
@@ -284,7 +294,8 @@ export class Database {
         ...properties,
       },
       fields: Object.keys(properties).join(','),
-    }, true);
+    },
+    true);
     if ('title' in properties) {
       this.notifyAction(ACTIONS.TABLE_RENAMED, tableName, properties['title']);
     }
@@ -318,5 +329,20 @@ export class Database {
     }
     const {sheets} = result.data;
     sheets.forEach((s: Sheet) => this._updateOrCreateTable(s));
+  }
+
+  _validateColumnNames(headerValues: string []) {
+    if (!headerValues) throw new Error('Column names is empty');
+
+    if (!checkIfNameValid(headerValues)) {
+      throw new Error('Invalid column names. Column names should contain of only letters, numbers and underscore');
+    }
+
+    if (new Set(headerValues).size !== headerValues.length) {
+      throw new Error('There are duplicate column names');
+    }
+    if (!headerValues.filter(Boolean).length) {
+      throw new Error('All header values are blank');
+    }
   }
 }

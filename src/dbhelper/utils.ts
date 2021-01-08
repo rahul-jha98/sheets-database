@@ -51,7 +51,15 @@ export function reduceRowsToDelete(rowsToDelete: number[]) : number[][] {
     const [a, b] = reducedRowsToDelete[i];
     const toDelete = b-a;
     reducedRowsToDelete[i]= [a-deletedSoFar, b-deletedSoFar];
-    deletedSoFar += toDelete; 
+    deletedSoFar += toDelete;
   }
   return reducedRowsToDelete;
+}
+
+export function checkIfNameValid(data: string[] | string) : boolean {
+  if (typeof(data) === 'string') {
+    data = [data];
+  }
+  const validRegex = /^[A-Za-z0-9_]+$/;
+  return data.every((name) => name.match(validRegex) !== null);
 }

@@ -1,4 +1,4 @@
-import {columnNumberToName, reduceRowsToDelete} from './utils';
+import {checkIfNameValid, columnNumberToName, reduceRowsToDelete} from './utils';
 import {Sheet, SheetData, SheetProperties} from './ResponseStructure';
 
 type primitiveTypes = string | boolean | number | null | undefined;
@@ -70,14 +70,14 @@ export class Table {
       }
       throw new Error('Table Headers (Header Row) is missing.');
     }
-
-    this.columnNames = rows[0].map((header: string) => header.trim());
-
-    if (!this.columnNames.filter(Boolean).length) {
-      if (!enforceHeaders) {
-        return;
+    const columnNames = rows[0].map((header: string) => header.trim());
+    try {
+      this._database._validateColumnNames(columnNames);
+    } catch (err) {
+      if (err.message === 'All header values are blank' && !enforceHeaders) {
+        this.columnNames = columnNames;
       }
-      throw new Error('All table headers are empty');
+      throw err;
     }
   }
 
@@ -89,47 +89,8 @@ export class Table {
    * - Note - It deletes the values beyond length of headers passed
    */
   async setColumnNames(headerValues: string[], shrinkTable = false) {
-    if (!headerValues) return;
-
-    if (headerValues.length > this.columnCount) {
-      await this._setColumnSize(headerValues.length);
-    }
-
-    const trimmedHeaderValues = headerValues.map((h) => h.trim());
-
-    // checkForDuplicateHeaders(trimmedHeaderValues);
-
-    if (!trimmedHeaderValues.filter(Boolean).length) {
-      throw new Error('All your header cells are blank');
-    }
-
-    const response = await this._database.axios.request({
-      method: 'put',
-      url: `/values/${this._endoedA1SheetName}!1:1`,
-      params: {
-        valueInputOption: 'USER_ENTERED', // other option is RAW
-        includeValuesInResponse: true,
-      },
-      data: {
-        range: `${this._a1SheetName}!1:1`,
-        majorDimension: 'ROWS',
-        values: [
-          [
-            ...trimmedHeaderValues,
-            // pad the rest of the row with empty values to clear them all out
-            ...Array(this.columnCount - trimmedHeaderValues.length).fill(''),
-          ],
-        ],
-      },
-    });
-    this.columnNames = response.data.updatedData.values[0];
-    if (shrinkTable && trimmedHeaderValues.length < this.columnCount) {
-      return this.shrinkSheetToFitTable();
-    } else {
-      for (let i = 0; i < headerValues.length; i++) {
-        this._cells[0][i] = headerValues[i];
-      }
-    }
+    this._database._validateColumnNames(headerValues);
+    return this._setFirstRow(headerValues, shrinkTable);
   }
 
   /**
@@ -156,7 +117,7 @@ export class Table {
   }
 
   /**
-   * get the data of the table in the form of array
+   * get the data of the table in the form of 2D array
    * - Note: The data is the one which we got in last reload
    * @return {Array<Array<primitiveTypes>>} the data values aray
    */
@@ -164,6 +125,10 @@ export class Table {
     return this._cells.slice(1, this._lastRowsWithValues + 1);
   }
 
+  /**
+   * get the data of the table in the form of array of objects
+   * @return array of entries as object keyed by column names
+   */
   getData() : Array<Record<string, primitiveTypes>> {
     const dataArray = [];
     for (let i = 1; i <= this._lastRowsWithValues
@@ -178,6 +143,11 @@ export class Table {
     return dataArray;
   }
 
+  /**
+   * get the entry at particular index
+   * @param idx index of the entry needed
+   * @returns entry with given index in form of object keyed by column names
+   */
   getRow(idx: number) : Record<string, primitiveTypes> {
     idx = idx + 1;
     this._ensureRowValid(idx);
@@ -340,7 +310,7 @@ export class Table {
       });
     }
     const endColumn = columnNumberToName(this.columnNames.length);
-    const rowRange = `${this._endoedA1SheetName}!A${rowIdx+2}:${endColumn}${rowIdx+2}`;
+    const rowRange = `${this._encodedA1SheetName}!A${rowIdx+2}:${endColumn}${rowIdx+2}`;
 
     await this._database.axios.request({
       method: 'POST',
@@ -364,12 +334,13 @@ export class Table {
 
   async updateRows(rowIndices: number[], updateGenerator : updateFunction) {
     const endColumn = columnNumberToName(this.columnNames.length);
-    const encodedA1SheetName = this._endoedA1SheetName;
+    const encodedA1SheetName = this._encodedA1SheetName;
     const columnNames = this.columnNames;
 
     const updates = rowIndices.map((rowIdx) => updateGenerator(this.getRow(rowIdx), rowIdx));
 
-    const data = updates.map((update, idx) => {
+    const data = updates.map((update, updateIdx) => {
+      const idx = rowIndices[updateIdx];
       const rowRange = `${encodedA1SheetName}!A${idx+2}:${endColumn}${idx+2}`;
       const updatedRow = columnNames.map((name) => {
         if (update.hasOwnProperty(name)) {
@@ -415,7 +386,7 @@ export class Table {
   async clear(refetch = true) {
     await this._database.axios.request({
       method: 'post',
-      url: `/values/${this._endoedA1SheetName}!A2:${this.lastColumnLetter+this.rowCount}:clear`,
+      url: `/values/${this._encodedA1SheetName}!A2:${this.lastColumnLetter+this.rowCount}:clear`,
     });
     if (refetch) {
       await this.reload();
@@ -424,6 +395,9 @@ export class Table {
     }
   }
 
+  /**
+   * Resizes the sheet to contatin only data which is stored locally.
+   */
   async shrinkSheetToFitTable() {
     return this._database.updateSheetProperties(this.sheetId, {
       gridProperties: {
@@ -505,7 +479,7 @@ export class Table {
   /**
    * sheet name to be passed as params in API calls
    */
-  get _endoedA1SheetName() : string {
+  get _encodedA1SheetName() : string {
     return encodeURIComponent(this._a1SheetName);
   }
 
@@ -528,7 +502,7 @@ export class Table {
    */
   async _getCellsInRange(a1Range: string) {
     const response = await this._database.axios.get(
-        `/values/${this._endoedA1SheetName}!${a1Range}`);
+        `/values/${this._encodedA1SheetName}!${a1Range}`);
     return response.data.values;
   }
 
@@ -593,7 +567,7 @@ export class Table {
 
     await this._database.axios.request({
       method: 'post',
-      url: `/values/${this._endoedA1SheetName}!A1:append`,
+      url: `/values/${this._encodedA1SheetName}!A1:append`,
       params: {
         valueInputOption: 'RAW',
         insertDataOption: insert ? 'INSERT_ROWS' : 'OVERWRITE',
@@ -609,6 +583,38 @@ export class Table {
     }
   }
 
+  async _setFirstRow(headerValues: string [], shrinkTable = false) {
+    if (headerValues.length > this.columnCount) {
+      await this._setColumnSize(headerValues.length);
+    }
+    const response = await this._database.axios.request({
+      method: 'put',
+      url: `/values/${this._encodedA1SheetName}!1:1`,
+      params: {
+        valueInputOption: 'USER_ENTERED', // other option is RAW
+        includeValuesInResponse: true,
+      },
+      data: {
+        range: `${this._a1SheetName}!1:1`,
+        majorDimension: 'ROWS',
+        values: [
+          [
+            ...headerValues,
+            // pad the rest of the row with empty values to clear them all out
+            ...Array(this.columnCount - headerValues.length).fill(''),
+          ],
+        ],
+      },
+    });
+    this.columnNames = response.data.updatedData.values[0];
+    if (shrinkTable && headerValues.length < this.columnCount) {
+      return this.shrinkSheetToFitTable();
+    } else {
+      for (let i = 0; i < headerValues.length; i++) {
+        this._cells[0][i] = headerValues[i];
+      }
+    }
+  }
 
   /**
    * @private
