@@ -23,7 +23,7 @@ Property|Type|Description
 ---|---|---
 `length`|number|Number of entries in the table
 `columnNames`|Array.< string >|List of column names in the table
-`data`|Array. <Object>|returns value of [`getData()`](#method-getData)
+`data`|Array.< Object >|returns value of [`getData()`](#method-getData)
 
 
 ## Methods

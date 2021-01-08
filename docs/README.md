@@ -64,7 +64,7 @@ More info:
 ### Working with Table Entries
 ```javascript
 // add a new table
-const table = await db.addTable('entries', ['name', 'age'']);
+const table = await db.addTable('entries', ['name', 'age']);
 
 // Insert Single Entry
 await table.insertOne({'name': 'Micheal Scott', 'age': 43});

@@ -1,6 +1,6 @@
 import {Database} from './dbhelper/Database';
 import {ACTIONS} from './dbhelper/actions';
-import type {Table} from './dbhelper/Table';
+import {Table} from './dbhelper/Table';
 import type {OAuth2Client} from 'google-auth-library';
 /**
  * @class
@@ -20,14 +20,11 @@ export class SheetDatabase {
 
     this._db.subscrible((actionType: number, ...payload: string[]) => {
       if (actionType === ACTIONS.TABLE_DELETED) {
-        delete this[payload[0]];
-        delete this._tables[payload[0]];
+        this._removeTableReference(payload[0]);
       } else if (actionType === ACTIONS.TABLE_RENAMED) {
-        const table = this[payload[0]];
-        delete this[payload[0]];
-        delete this._tables[payload[0]];
-        this[payload[1]] = table;
-        this._tables[payload[1]] = table;
+        const table = this.getTable(payload[0]);
+        this._removeTableReference(payload[0]);
+        this._addTableReference(payload[1], table);
       }
     });
   }
@@ -42,8 +39,7 @@ export class SheetDatabase {
 
     for (const table of Object.values(this._db.tables)) {
       await table.loadColumnNames(false);
-      this[table.title] = table;
-      this._tables[table.title] = table;
+      this._addTableReference(table.name, table);
     }
   }
 
@@ -76,9 +72,7 @@ export class SheetDatabase {
       },
       headerValues: columnNames,
     });
-    await table.loadColumnNames();
-    this[table.title] = table;
-    this._tables[table.title] = table;
+    this._addTableReference(tableName, table);
     return table;
   }
 
@@ -142,12 +136,34 @@ export class SheetDatabase {
     this._db.useAccessToken(token);
   }
 
+  /**
+   * Set authentication mode to use service account with the given credentials.
+   * @param credentials object which will contain keys client_email and private_key.
+   */
   async useServiceAccount(credentials: {client_email: string, private_key: string}) {
     return this._db.useServiceAccount(credentials.client_email, credentials.private_key);
   }
 
+  /**
+   * Use the oauthclient passed for authentication. Token is refreshed used the refresh token automatically.
+   * @param oAuth2Client client object with refresh token set. The access token and expiration date can be generated
+   */
   useOAuth2Client(oAuth2Client: OAuth2Client) {
     this._db.useOAuth2Client(oAuth2Client);
+  }
+
+  _addTableReference(name: string, table: Table) {
+    if (!this.hasOwnProperty(name) && typeof this[name] !== 'function') {
+      this[name] = table;
+    }
+    this._tables[name] = table;
+  }
+
+  _removeTableReference(name: string) {
+    if (this.hasOwnProperty(name) && this[name] instanceof Table) {
+      delete this[name];
+    }
+    delete this._tables[name];
   }
 }
 
