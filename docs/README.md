@@ -5,7 +5,7 @@ _Welcome to the documentation site for_
 
 [![License](https://img.shields.io/badge/license-MIT-green)](https://raw.githubusercontent.com/rahul-jha98/google-sheets-db/main/LICENSE)
 
-> Library to help use a Google Sheet as an database
+> Library to help use a Google Sheet as a database (or CMS)
 
 
 ## Features
@@ -16,6 +16,7 @@ _Welcome to the documentation site for_
 
 <!-- **Docs site -**
 Full docs available at [https://rahul-jha98.github.io/google-sheets-db/](https://rahul-jha98.github.io/google-sheets-db/) -->
+
 
 > 🚀 **Installation** - `npm i google-sheets-db --save` or `yarn add google-sheets-db`
 
@@ -114,10 +115,23 @@ console.log(table.getData());
 More Info:
 - [Table](https://rahul-jha98.github.io/google-sheets-db//#/classdocs/table)
 
+## Why?
+> The library will let you worry only about the CRUD operation you wish to perfrom and handles the task of updating it to the spreadsheet internally.
+
+Do you ever wonder if you can use Google Sheets as a no-cost database? Well, if your application deals with lot of entries and joins across tables than of course it isn't such a good idea. But if you have a **small application or a static website that needs very few dynamic content** there is no point in having a backend that deals with a database to serve those content since you could easily use a Google Sheet to store the data. You could also consider this as an option to get the frontend part's development started by using Google Sheet as a mock database while the actual backend is being built.
+
+But the Google Sheet's API v4 is a bit awkward with confusing docs, at least to get started. Moreover, the API is not designed to use Sheets API as a database which is why you would require you to deal with the rows and columns data manually to deal with data. With such a steep learning curve to get started the prospect of using it as a database doesn't seems like a good deal. 
+
+The library aims to remove the learning curve completely by providing methods that lets you interact with the database without worrying about the Sheets API at all. 
+Moreover the API of the library is quite intuitive to get started with and provides functionalities for most of the database operations.
+
+
+## Note
+`google-sheets-db` is heavily inspired by and borrows some code from [node-google-spreadsheet](https://github.com/theoephraim/node-google-spreadsheet).
 
 ## Contributions
 
-This module was written by [Rahul Jha](https://github.com/rahul-jha98).
+This module was written by [Rahul Jha](https://github.com/rahul-jha98). 
 
 Contributions are welcome. Make sure to add relevant documentation along with code changes.
 Also, since I am new to Typescript and still exploring any help in improving the code practices and conventions would be appreciated.
