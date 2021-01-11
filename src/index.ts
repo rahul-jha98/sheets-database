@@ -152,6 +152,11 @@ export class SheetDatabase {
     this._db.useOAuth2Client(oAuth2Client);
   }
 
+  /**
+   * @private
+   * @param name key which will be used to access table
+   * @param table corresponding Table object
+   */
   _addTableReference(name: string, table: Table) {
     if (!this.hasOwnProperty(name) && typeof this[name] !== 'function') {
       this[name] = table;
@@ -159,6 +164,10 @@ export class SheetDatabase {
     this._tables[name] = table;
   }
 
+  /**
+   * @private
+   * @param name key of property which will be removed
+   */
   _removeTableReference(name: string) {
     if (this.hasOwnProperty(name) && this[name] instanceof Table) {
       delete this[name];

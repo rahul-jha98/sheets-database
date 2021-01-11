@@ -296,6 +296,12 @@ export class Table {
     return this.deleteRows(rowsToDelete);
   }
 
+  /**
+   * applies update to the row at given index.
+   * @param rowIdx index of row to update
+   * @param updates updates that you wish to apply,
+   * If passing object only put those keys that needs to be updated
+   */
   async updateRow(rowIdx: number, updates: rowData) {
     let updatedRow: primitiveTypes[] = [];
     if (Array.isArray(updates)) {
@@ -332,6 +338,13 @@ export class Table {
     }
   }
 
+  /**
+   * applies updates to all the rows in the array passed
+   * @param rowIndices array of row values to be updated
+   * @param updateGenerator function that generates the updates for each row
+   * the function will recieve the data of the row and its row index as parameter
+   * and is expected to return an object with the key as column name whose value needs to be updated
+   */
   async updateRows(rowIndices: number[], updateGenerator : updateFunction) {
     const endColumn = columnNumberToName(this.columnNames.length);
     const encodedA1SheetName = this._encodedA1SheetName;
@@ -356,7 +369,7 @@ export class Table {
       };
     });
 
-    await this._database.axios.request({
+    const response = await this._database.axios.request({
       method: 'POST',
       url: `values:batchUpdate`,
       data: {
@@ -365,8 +378,25 @@ export class Table {
         data,
       },
     });
+    response.data.responses.forEach(
+        (updatedRow: {updatedData: {values: primitiveTypes[]}},
+            idx: number) => {
+          const rowIdx = rowIndices[idx];
+          updatedRow.updatedData.values.forEach((value: primitiveTypes, columnIdx: number) => {
+            this._cells[rowIdx][columnIdx] = value;
+          });
+        });
   }
 
+  /**
+   * applies update to rows that satisfy the given condition
+   * @param selectionCondition function that is used to select the rows where updates will be applied
+   * the function will receive the data of the row and its row index as parameter
+   * and should return a boolean value showing whether to select the row or not.
+   * @param updateGenerator function that generates the updates for each row
+   * the function will recieve the data of the row and its row index as parameter
+   * and is expected to return an object with the key as column name whose value needs to be updated
+   */
   async updateRowsWhere(
       selectionCondition: (rowData?: Record<string, primitiveTypes>, index?: number) => boolean,
       updateGenerator: updateFunction) {
