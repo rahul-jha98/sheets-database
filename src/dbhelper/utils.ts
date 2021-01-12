@@ -33,8 +33,8 @@ export function columnNameToNumber(columnName: string): number {
 
 export function reduceRowsToDelete(rowsToDelete: number[]) : number[][] {
   const rangeRowsToDelete = rowsToDelete.map((rowNo) => [rowNo, rowNo+1]);
-  const reducedRowsToDelete : number[][] = []
-  reducedRowsToDelete.push(rangeRowsToDelete[0])
+  const reducedRowsToDelete : number[][] = [];
+  reducedRowsToDelete.push(rangeRowsToDelete[0]);
   let lastIdx = 0;
 
   for (let i = 1; i < rangeRowsToDelete.length; i++) {

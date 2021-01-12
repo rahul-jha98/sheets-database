@@ -1,5 +1,5 @@
 {
-  "name": "google-sheets-db",
+  "name": "sheets-database",
   "version": "1.0.0",
   "description": "Library to help use a Google Sheet as a database",
   "main": "lib/src/index.js",
@@ -8,8 +8,26 @@
     "build": "rm -rf lib/ && tsc",
     "start": "npm run build && node lib/src/index.js",
     "test": "npm run build && jest --runInBand",
-    "lintjs": "eslint './lib/src/**/*.{js,ts,tsx}' --quiet --fix"
+    "jest": "jest --runInBand",
+    "lintjs": "eslint './lib/src/**/*.{js,ts,tsx}' --quiet --fix",
+    "prepublishOnly": "npm run jest",
+    "version": "git add -A src",
+    "postversion" : "git push && git push --tags"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rahul-jha98/sheets-database.git"
+  },
+  "keywords": ["google", "sheets", "database", "db", "google sheets", "spreadsheets", "spreadsheet"],
+  "author": "Rahul Jha <jharahul1998@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rahul-jha98/sheets-database/issues"
+  },
+  "homepage": "https://rahul-jha98.github.io/sheets-database/",
+  "files": [
+    "lib/src/"
+  ],
   "jest": {
     "testMatch": [
       "**/__tests__/**/*.js?(x)",
@@ -20,19 +38,6 @@
     ],
     "testTimeout": 15000
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/rahul-jha98/google-sheets-db.git"
-  },
-  "author": "Rahul Jha",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/rahul-jha98/google-sheets-db/issues"
-  },
-  "homepage": "https://github.com/rahul-jha98/google-sheets-db#readme",
-  "files": [
-    "lib/src/"
-  ],
   "dependencies": {
     "axios": "^0.21.1",
     "google-auth-library": "^6.1.3"

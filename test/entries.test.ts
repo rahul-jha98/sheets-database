@@ -106,12 +106,14 @@ describe('Handle CRUD Operations on Table Entries', () => {
       await table.updateRow(0, [1, null]);
       expect(table.getRow(0).index).toBe(1);
     });
-    it('can update rows using objects', async() => {
+    it('can update rows using objects', async () => {
       await table.updateRow(0, {letter: 'changed'});
       expect(table.getRow(0).letter).toBe('changed');
     });
     it('can update multiple rows', async () => {
-      await table.updateRows([0, 1, 2], (data) => {return {letter: data?.index}});
+      await table.updateRows([0, 1, 2], (data) => {
+        return {letter: data?.index};
+      });
     });
   });
 });

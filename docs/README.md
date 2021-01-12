@@ -1,9 +1,9 @@
 _Welcome to the documentation site for_
 <p class='logo'>
-  <img alt="logo" src="./assets/imgs/logo.svg" width="580">
+  <img alt="logo" src="./assets/imgs/logo.svg" width="480">
 </p>
 
-[![License](https://img.shields.io/badge/license-MIT-green)](https://raw.githubusercontent.com/rahul-jha98/google-sheets-db/main/LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://raw.githubusercontent.com/rahul-jha98/sheets-database/main/LICENSE)
 
 > Library to help use a Google Sheet as a database (or CMS)
 
@@ -15,10 +15,10 @@ _Welcome to the documentation site for_
 - Provides method to reduce memory and network usage to optimize for your use case.
 
 <!-- **Docs site -**
-Full docs available at [https://rahul-jha98.github.io/google-sheets-db/](https://rahul-jha98.github.io/google-sheets-db/) -->
+Full docs available at [https://rahul-jha98.github.io/sheets-database/](https://rahul-jha98.github.io/sheets-database/) -->
 
 
-> 🚀 **Installation** - `npm i google-sheets-db --save` or `yarn add google-sheets-db`
+> 🚀 **Installation** - `npm i sheets-database --save` or `yarn add sheets-database`
 
 ## Examples
 _the following examples are meant to give you an idea of just some of the things you can do_
@@ -28,13 +28,13 @@ _the following examples are meant to give you an idea of just some of the things
 
 ### Working with Tables
 ```javascript
-const { SheetDatabase } = require('google-sheets-db');
+const { SheetDatabase } = require('sheets-database');
 
 // Initialize the Database with doc ID (long id in the sheets URL)
 const db = new SheetDatabase('<the sheet ID from the url>');
 
 // Initialize Auth
-// see more available options at https://rahul-jha98.github.io/google-sheets-db/#/getting-started/authentication
+// see more available options at https://rahul-jha98.github.io/sheets-database/#/getting-started/authentication
 await db.useServiceAccount({
   client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
   private_key: process.env.GOOGLE_PRIVATE_KEY,
@@ -59,7 +59,7 @@ await db.dropTable('newTable2');
 ```
 More info:
 - [Authentication](https://rahul-jha98.github.io//#/getting-started/authentication)
-- [SheetDatabase](https://rahul-jha98.github.io/google-sheets-db//#/classdocs/sheetdatabase)
+- [SheetDatabase](https://rahul-jha98.github.io/sheets-database//#/classdocs/sheetdatabase)
 
 
 ### Working with Table Entries
@@ -113,7 +113,7 @@ console.log(table.getData());
  */
 ```
 More Info:
-- [Table](https://rahul-jha98.github.io/google-sheets-db//#/classdocs/table)
+- [Table](https://rahul-jha98.github.io/sheets-database//#/classdocs/table)
 
 ## Why?
 > The library will let you worry only about the CRUD operation you wish to perfrom and handles the task of updating it to the spreadsheet internally.
@@ -125,9 +125,8 @@ But the Google Sheet's API v4 is a bit awkward with confusing docs, at least to 
 The library aims to remove the learning curve completely by providing methods that lets you interact with the database without worrying about the Sheets API at all. 
 Moreover the API of the library is quite intuitive to get started with and provides functionalities for most of the database operations.
 
-
 ## Note
-`google-sheets-db` is heavily inspired by and borrows some code from [node-google-spreadsheet](https://github.com/theoephraim/node-google-spreadsheet).
+`sheets-database` is heavily inspired by and borrows some code from [node-google-spreadsheet](https://github.com/theoephraim/node-google-spreadsheet).
 
 ## Contributions
 
@@ -138,3 +137,6 @@ Also, since I am new to Typescript and still exploring any help in improving the
 
 The docs site is generated using [docsify](https://docsify.js.org). To preview and run locally so you can make edits, install docsify_cli and run `docsify serve ./docs` in the project root folder and head to http://localhost:3000
 The content lives in markdown files in the docs folder.
+
+## License
+[MIT](https://github.com/rahul-jha98/sheets-database/blob/main/LICENSE)

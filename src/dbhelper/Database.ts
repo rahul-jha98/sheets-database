@@ -225,7 +225,7 @@ export class Database {
   }
 
   async _requestBatchUpdate(requests: any) {
-    const response = await this.axios.post(':batchUpdate', {
+    await this.axios.post(':batchUpdate', {
       requests,
     });
   }

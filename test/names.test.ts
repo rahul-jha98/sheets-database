@@ -26,7 +26,10 @@ describe('Prevent incorrect naming of tables and columns', () => {
     it('can prevent setting incorrect table headers', async () => {
       const table = await database.addTable('headers', ['header1', 'header2', 'header3']);
       expect(async () => await table.setColumnNames(['header@1', 'header2'])).rejects;
-      table.drop();
+    });
+
+    afterAll(async () => {
+      await database.headers.drop();
     });
   });
 });

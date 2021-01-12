@@ -1,5 +1,5 @@
-import {checkIfNameValid, columnNumberToName, reduceRowsToDelete} from './utils';
 import {Sheet, SheetData, SheetProperties} from './ResponseStructure';
+import {columnNumberToName, reduceRowsToDelete} from './utils';
 
 type primitiveTypes = string | boolean | number | null | undefined;
 type rowDataObject = Record<string, primitiveTypes>;
@@ -537,6 +537,7 @@ export class Table {
   }
 
   /**
+   * @private
    * resize the number of columns
    * @param columnCount new value of column count
    */
