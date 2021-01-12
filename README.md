@@ -2,6 +2,7 @@
   <img alt="logo" src="https://raw.githubusercontent.com/rahul-jha98/sheets-database/main/docs/assets/imgs/logo.svg" width="480">
 </p>
 
+[![NPM version](https://img.shields.io/npm/v/sheets-database)](https://www.npmjs.com/package/sheets-database)
 [![License](https://img.shields.io/badge/license-MIT-green)](https://raw.githubusercontent.com/rahul-jha98/sheets-database/main/LICENSE)
 
 > Library to help use a Google Sheet as a database (or CMS)
