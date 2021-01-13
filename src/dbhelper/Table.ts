@@ -2,9 +2,6 @@ import {Sheet, SheetData, SheetProperties} from './ResponseStructure';
 import {columnNumberToName, reduceRowsToDelete} from './utils';
 
 type primitiveTypes = string | boolean | number | null | undefined;
-type rowDataObject = Record<string, primitiveTypes>;
-type rowData = Array<primitiveTypes>|rowDataObject
-type updateFunction = (data?: rowDataObject, idx?: number) => rowDataObject
 
 import type {Database} from './Database';
 
@@ -164,14 +161,17 @@ export class Table {
    * @param data data to be inserted
    * @param {boolean} [refetch=true] whether to refetch rows after operation
    */
-  async insert(data: rowData | Array<rowData>, refetch = true) {
+  async insert(
+      data: primitiveTypes[]|Record<string, primitiveTypes>|Array<primitiveTypes[]|Record<string, primitiveTypes>>,
+      refetch = true,
+  ) {
     if (Array.isArray(data)) {
       if (Array.isArray(data[0]) ||
         (typeof data[0] === 'object' && data[0] != null)) {
-        return this.insertMany(data as rowData[], refetch);
+        return this.insertMany(data as Array<primitiveTypes[]|Record<string, primitiveTypes>>, refetch);
       }
     }
-    return this.insertMany([data as rowData], refetch);
+    return this.insertMany([data as Array<primitiveTypes>|Record<string, primitiveTypes>], refetch);
   }
 
   /**
@@ -179,7 +179,7 @@ export class Table {
    * @param rowValue single entry to be inserted in table
    * @param refetch whether to refetch rows after the operation
    */
-  async insertOne(rowValue: rowData, refetch = true) {
+  async insertOne(rowValue: Array<primitiveTypes>|Record<string, primitiveTypes>, refetch = true) {
     return this.insertMany([rowValue], refetch=refetch);
   }
 
@@ -188,8 +188,10 @@ export class Table {
    * @param rowValueArray array of entries to be inserted in table
    * @param refetch whether to refetch rows after the operation
    */
-  async insertMany(rowValueArray: Array<rowData>,
-      refetch = true) {
+  async insertMany(
+      rowValueArray: Array<primitiveTypes[]|Record<string, primitiveTypes>>,
+      refetch = true,
+  ) {
     const rowsArray: primitiveTypes[][] = [];
 
     rowValueArray.forEach((row) => {
@@ -301,8 +303,9 @@ export class Table {
    * @param rowIdx index of row to update
    * @param updates updates that you wish to apply,
    * If passing object only put those keys that needs to be updated
+   * @param refetch whether to refetch rows after the operation
    */
-  async updateRow(rowIdx: number, updates: rowData) {
+  async updateRow(rowIdx: number, updates: Array<primitiveTypes>|Record<string, primitiveTypes>, refetch = true) {
     let updatedRow: primitiveTypes[] = [];
     if (Array.isArray(updates)) {
       updatedRow = updates;
@@ -331,10 +334,8 @@ export class Table {
         }],
       },
     });
-    for (let i = 0; i < updatedRow.length; i++) {
-      if (updatedRow[i] !== null) {
-        this._cells[rowIdx+1][i] = updatedRow[i];
-      }
+    if (refetch) {
+      return this.reload();
     }
   }
 
@@ -344,8 +345,13 @@ export class Table {
    * @param updateGenerator function that generates the updates for each row
    * the function will recieve the data of the row and its row index as parameter
    * and is expected to return an object with the key as column name whose value needs to be updated
+   * @param refetch whether to refetch rows after the operation
    */
-  async updateRows(rowIndices: number[], updateGenerator : updateFunction) {
+  async updateRows(
+      rowIndices: number[],
+      updateGenerator : (data?: Record<string, primitiveTypes>, idx?: number) => Record<string, primitiveTypes>,
+      refetch = true,
+  ) {
     const endColumn = columnNumberToName(this.columnNames.length);
     const encodedA1SheetName = this._encodedA1SheetName;
     const columnNames = this.columnNames;
@@ -369,7 +375,7 @@ export class Table {
       };
     });
 
-    const response = await this._database.axios.request({
+    await this._database.axios.request({
       method: 'POST',
       url: `values:batchUpdate`,
       data: {
@@ -378,14 +384,9 @@ export class Table {
         data,
       },
     });
-    response.data.responses.forEach(
-        (updatedRow: {updatedData: {values: primitiveTypes[]}},
-            idx: number) => {
-          const rowIdx = rowIndices[idx];
-          updatedRow.updatedData.values.forEach((value: primitiveTypes, columnIdx: number) => {
-            this._cells[rowIdx][columnIdx] = value;
-          });
-        });
+    if (refetch) {
+      return this.reload();
+    }
   }
 
   /**
@@ -396,10 +397,13 @@ export class Table {
    * @param updateGenerator function that generates the updates for each row
    * the function will recieve the data of the row and its row index as parameter
    * and is expected to return an object with the key as column name whose value needs to be updated
+   * @param refetch whether to refetch rows after the operation
    */
   async updateRowsWhere(
       selectionCondition: (rowData?: Record<string, primitiveTypes>, index?: number) => boolean,
-      updateGenerator: updateFunction) {
+      updateGenerator: (data?: Record<string, primitiveTypes>, idx?: number) => Record<string, primitiveTypes>,
+      refetch = true,
+  ) {
     const rowsToDelete : number[] = [];
     const isToBeDeleted = this.getData().map(selectionCondition);
     isToBeDeleted.forEach((status, rowIdx) => {
@@ -407,7 +411,7 @@ export class Table {
         rowsToDelete.push(rowIdx);
       }
     });
-    return this.updateRows(rowsToDelete, updateGenerator);
+    return this.updateRows(rowsToDelete, updateGenerator, refetch);
   }
   /**
    * clears all the entries from the table

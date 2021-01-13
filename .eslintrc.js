@@ -20,7 +20,7 @@ module.exports = {
     'max-len': ['error', {
       'ignoreComments': true,
       'ignoreStrings': true,
-      'code': 100,
+      'code': 120,
     }],
     'valid-jsdoc': ['error', {
       'requireParamType': false,
