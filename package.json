@@ -1,6 +1,6 @@
 {
   "name": "sheets-database",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Library to help use a Google Sheet as a database",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -12,13 +12,21 @@
     "lintjs": "eslint './lib/src/**/*.{js,ts,tsx}' --quiet --fix",
     "prepublishOnly": "npm run jest",
     "version": "git add -A src",
-    "postversion" : "git push && git push --tags"
+    "postversion": "git push && git push --tags"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rahul-jha98/sheets-database.git"
   },
-  "keywords": ["google", "sheets", "database", "db", "google sheets", "spreadsheets", "spreadsheet"],
+  "keywords": [
+    "google",
+    "sheets",
+    "database",
+    "db",
+    "google sheets",
+    "spreadsheets",
+    "spreadsheet"
+  ],
   "author": "Rahul Jha <jharahul1998@gmail.com>",
   "license": "MIT",
   "bugs": {
