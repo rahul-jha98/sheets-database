@@ -58,8 +58,8 @@ await db.newTable1.drop();
 await db.dropTable('newTable2');
 ```
 More info:
-- [Authentication](https://rahul-jha98.github.io//#/getting-started/authentication)
-- [SheetDatabase](https://rahul-jha98.github.io/sheets-database//#/classdocs/sheetdatabase)
+- [Authentication](https://rahul-jha98.github.io/sheets-database#/getting-started/authentication)
+- [SheetDatabase](https://rahul-jha98.github.io/sheets-database/#/classdocs/sheetdatabase)
 
 
 ### Working with Table Entries

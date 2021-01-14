@@ -28,6 +28,7 @@ module.exports = {
       'requireReturnType': false,
     }],
     'camelcase': ['off'],
+    'no-console': ['error'],
   },
   parser: '@typescript-eslint/parser',
   parserOptions: {

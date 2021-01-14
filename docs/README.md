@@ -3,6 +3,7 @@ _Welcome to the documentation site for_
   <img alt="logo" src="./assets/imgs/logo.svg" width="480">
 </p>
 
+[![NPM version](https://img.shields.io/npm/v/sheets-database)](https://www.npmjs.com/package/sheets-database)
 [![License](https://img.shields.io/badge/license-MIT-green)](https://raw.githubusercontent.com/rahul-jha98/sheets-database/main/LICENSE)
 
 > Library to help use a Google Sheet as a database (or CMS)
@@ -58,8 +59,8 @@ await db.newTable1.drop();
 await db.dropTable('newTable2');
 ```
 More info:
-- [Authentication](https://rahul-jha98.github.io//#/getting-started/authentication)
-- [SheetDatabase](https://rahul-jha98.github.io/sheets-database//#/classdocs/sheetdatabase)
+- [Authentication](https://rahul-jha98.github.io/sheets-database#/getting-started/authentication)
+- [SheetDatabase](https://rahul-jha98.github.io/sheets-database/#/classdocs/sheetdatabase)
 
 
 ### Working with Table Entries
