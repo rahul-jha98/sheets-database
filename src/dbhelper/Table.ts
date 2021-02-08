@@ -70,6 +70,7 @@ export class Table {
     const columnNames = rows[0].map((header: string) => header.trim());
     try {
       this._database._validateColumnNames(columnNames);
+      this.columnNames = columnNames;
     } catch (err) {
       if (err.message === 'All header values are blank' && !enforceHeaders) {
         this.columnNames = columnNames;
