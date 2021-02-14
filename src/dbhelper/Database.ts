@@ -19,6 +19,8 @@ const GOOGLE_AUTH_SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets',
 ];
 
+const sheet_fields = 'sheets.data.rowData.values.effectiveValue,sheets.properties';
+const document_fields = 'properties.title';
 /**
  * @class
  */
@@ -120,6 +122,7 @@ export class Database {
     const response = await this.axios.get('/', {
       params: {
         includeGridData: withData,
+        fields: `${document_fields},${sheet_fields}`,
       },
     });
     this.title = response.data.properties.title;
@@ -319,12 +322,18 @@ export class Database {
         params: {
           includeGridData: true,
           ranges: dataFilters,
+          fields: sheet_fields,
         },
       });
     } else {
       result = await this.axios.post(':getByDataFilter', {
         includeGridData: true,
         dataFilters,
+      },
+      {
+        params: {
+          fields: sheet_fields,
+        },
       });
     }
     const {sheets} = result.data;
