@@ -1,6 +1,6 @@
 {
   "name": "sheets-database",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Library to help use a Google Sheet as a database",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
