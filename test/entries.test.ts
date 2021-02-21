@@ -92,12 +92,14 @@ describe('Handle CRUD Operations on Table Entries', () => {
       await table.clear();
       expect(table.getDataArray().length).toBe(0);
     });
-
     it('can delete based on condition', async () => {
       await table.insert(INITIAL_DATA);
       expect(table.getDataArray().length).toBe(INITIAL_DATA.length);
       await table.deleteRowsWhere((data) => data.index as number % 2 === 0);
       expect(table.getDataArray().length).toBe(INITIAL_DATA.length/2);
+    });
+    it('can handle scenario when no item meets condition', async () => {
+      await table.deleteRowsWhere((data) => data.index as number > 100);
     });
   });
 

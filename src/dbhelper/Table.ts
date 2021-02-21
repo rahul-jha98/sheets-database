@@ -262,6 +262,9 @@ export class Table {
    * - This prevents sort to be explicitly called
    */
   async deleteRows(rows: number[], sorted = false) {
+    if (rows.length === 0) {
+      return;
+    }
     if (!sorted) {
       rows.sort((a, b) => a - b);
     }
