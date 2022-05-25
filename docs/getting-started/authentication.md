@@ -77,10 +77,10 @@ You can now use this file in your project to authenticate as your service accoun
 ```javascript
 const creds = require('./config/app-credentials.json'); // the file saved above
 const db = new SheetDatabase('<YOUR-SHEETS-DOC-ID>');
-await db.useServiceAccountAuth(creds);
+await db.useServiceAccount(creds);
 
 // or preferably, loading that info from env vars / config instead of the file
-await db.useServiceAccountAuth({
+await db.useServiceAccount({
   client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
   private_key: process.env.GOOGLE_PRIVATE_KEY,
 });

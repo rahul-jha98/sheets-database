@@ -40,7 +40,7 @@ Param|Type|Required|Description
 
 > See [Getting Started > Authentication > API Key](getting-started/authentication#api-key) for more details
 
-#### `useServiceAccountAuth(creds)` (async) :id=method-useServiceAccountAuth
+#### `useServiceAccount(creds)` (async) :id=method-useServiceAccount
 > Initialize JWT-style auth for [google service account](https://cloud.google.com/iam/docs/service-accounts)
 
 Param|Type|Required|Description
