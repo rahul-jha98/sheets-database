@@ -10,7 +10,7 @@ You have several options for how you want to connect:
 - [Access Token](#access-token) - connect using the given access token
 
 
-## Enbale API
+## Enable API
 **👉 Set up your google project & enable the sheets API 👈**
 1. Go to the [Google Developers Console](https://console.developers.google.com/)
 2. Select your project or create a new one (and then select it)
